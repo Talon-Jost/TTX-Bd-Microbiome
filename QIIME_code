@@ -1,0 +1,2536 @@
+___________SETUP_____________
+There are several different ways to run QIIME and its associated sub-programs. There is Command Line Interface (CLI) which is a Bash-like input system, focusing ONLY on changing the input parameters and output parameters. Scripting QIIME CLI is not overly difficult, but it does have a steep learning curve, especially if you have never worked with Terminals or Command Prompt before. 
+
+There is the Docker hosted Galaxy interface which allows a graphical user interface (GUI) for QIIME that is hosted on Galaxy servers, the drawbacks to this is limited RAM and processing power (on later steps performed in parallel the output was ‘killed’) – meaning that some processes may simply be too computationally intense for the Galaxy/Docker combination. Galaxy/Docker is very useful to provide a visual, more ‘windows’-like approach to running QIIME; however, understanding outputs and parameters is MUCH more important in this system and it DOES require some understanding of Docker, porting, servers, and file systems to run. Fret not, there are very helpful guides online including a video by Dr. Boyelian himself explaining the process. On a personal note, I do not currently use Docker/Galaxy as version control is not currently possible to my knowledge, meaning there are certain issues of version translation that are simply not able to be overcome including dependencies, artifact incompatability, and update depreciation. 
+
+There is also a native-host run GUI known as QIIME Studio that runs off of Node.js and nmp packages. Qstudio is similar to the Galaxy interface that gives you a visual orientation that CLI does not offer, but this method falls into many the same pitfalls as Galaxy/Docker.
+
+Whatever method you decide to use, try and stick with it and don’t be afraid to look or ask for help. This is not an easy task and you will run into issues that you can’t necessarily solve on your own.
+
+___NOTE___
+
+There are multiple releases of QIIME that can be installed:
+
+BE VERY CAUTIOUS ABOUT WHAT RELEASE YOU INSTALL AND USE
+
+The reason for this warning is that not all versions and their associated outputs are interchangeable and inter-usable. If you conduct your analysis in version 2023.8 you won’t be able to use previous version artifacts, and if you use 2020.11 you won’t be able to use the created artifacts to run in downstream analyses, so on and so forth. Understand that you may have to re-run analyses depending on your desired version and desired end-result.
+
+CLI install
+This process will be different depending on your system. Using system native applications will be much easier than running virtual machines. I recommend using Macintosh or Linux releases as they provide more straightforward installation and use, but come with dependency and system-lock issues depending on your device, simply put – use what you have but understand you will have to troubleshoot.
+
+If you are using Macintosh you are in luck! Go to your Terminal, you should see a very cool (arguably intimidating) screen that is black with a string of letters and numbers. But what you should also see is the beginning has ‘(Base)’ printed at the front, this is perfect! This means you are not running on your system settings (roughly). You should be running a Conda environment (short for anaconda) which is a virtual environment within your system that is separate your work environment from your base system.
+
+I will leave anaconda installation alone for now as it should be relatively straightforward anyways.
+
+Documentation here: https://docs.conda.io/projects/miniconda/en/latest/
+
+Now, assuming you have miniconda installed we will continue.
+
+1. in your terminal, and if not on MacOS, activate conda if necessary using
+
+conda activate base
+
+this should output something that looks like:
+
+(base) tally@salamander-saver:~/Desktop$ 
+
+2) install your desired version of QIIME2
+Documentation here: https://docs.qiime2.org/2023.7/
+
+There is a version option in the top left corner that you can control. There will pop up a screen that says something to the effect of ‘these are out of date’ and will give you two options, pick ‘show me contents on this page’ if you aren’t wanting to use the latest version.
+
+3) Follow download instructions for the interface of your desire that aligns with your system. This process should be relatively straightforward and there are plenty of resources online for fixing any issues.
+
+4) check your environments in conda – returning present working sub-environments
+
+conda env list
+
+5a) Activate your qiime environment (in my case):
+
+conda activate qiime2-2020.11
+
+5b) check your qiime installation 
+qiime info
+or
+qiime –help
+
+To which it should output to something similar to this
+
+qiime info
+System versions
+Python version: 3.8.15
+QIIME 2 release: 2023.7
+QIIME 2 version: 2023.7.0
+q2cli version: 2023.7.0
+
+Installed plugins
+alignment: 2023.7.0
+composition: 2023.7.0
+cutadapt: 2023.7.0
+dada2: 2023.7.0
+deblur: 2023.7.0
+demux: 2023.7.0
+diversity: 2023.7.0
+diversity-lib: 2023.7.0
+emperor: 2023.7.0
+feature-classifier: 2023.7.0
+feature-table: 2023.7.0
+fragment-insertion: 2023.7.0
+gneiss: 2023.7.0
+longitudinal: 2023.7.0
+metadata: 2023.7.0
+phylogeny: 2023.7.0
+quality-control: 2023.7.0
+quality-filter: 2023.7.0
+sample-classifier: 2023.7.0
+taxa: 2023.7.0
+types: 2023.7.0
+vsearch: 2023.7.0
+
+Application config directory
+/home/tally/miniconda3/envs/qiime2-2023.7/var/q2cli
+
+Getting help
+To get help with QIIME 2, visit https://qiime2.org
+
+Working with Command Line Interface (CLI)
+
+Useful terminal commands
+CHECK working directory
+pwd (print working directory)
+
+CHECK available locations
+ls (list)
+
+return to previous directory
+cd ..
+
+obtain root permissions
+sudo -i
+
+exit
+exit
+
+clear terminal
+ctrl-l
+
+inspect element
+less [file name]
+update system 
+sudo apt update
+
+upgrade system
+sudo apt upgrade
+
+update and upgrade system
+sudo apt update && sudo apt upgrade -y
+
+fixing broken install dependencies
+sudo apt -–fix-broken install
+
+you should also have curl and wget within your toolkit as well, but those are more difficult to explain rather than just doing this.
+
+‘tab key’ autofill. Autofill will insert the remaining string as long as that string is unique, can save quite a bit of time. Even on qiime commands as well
+
+make working directory
+mkdir ‘file path/create-new-file-name-of-your-own’
+cd ‘file path/create-new-file-name-of-your-own’
+This will create a new file where you can house all your data if you’d like. Be aware, wherever you currently are within your system you will create the sub-directory within that location. If you are currently working within your ‘Desktop/’ folder, it will be created there. If you are within your ‘Desktop/Documents/’ it will be created there, so on and so forth. 
+
+_____________NOTE_____________
+understanding how GitHub repositories is a big plus as you can somewhat supercharge your abilities to explore data in general, but it also gives you the ability to go directly to repositories and obtain the necessary information for packages if necessary. 
+
+
+__________________BEFORE YOU IMPORT___________________
+
+You MUST have ALL your sequence files in one singular location, and the .fastq files compressed to a .gz style. And should end with .fastq.gz for ALL files you wish to import. More than likely, downloading from Dana Farber Cancer Institute they should already be in their needed format, if not there are resources available to get you to where you need to go. For the Walke lab, we appear to be only using SingleEndFastq Illumina data so you can follow along with this guide. There are, of course, resources available if there is a change to the type of Illumina sequencing done. 
+
+6) Joining reads, import, and visualization
+
+This tutorial will be for a manifest import as it seems to be the easiest way for single end data. Your data DOES NOT need to be in the same location as your working output/input directory. Your sequences can be in any location you desire; however, it will make it easier if your sequences are all in a singular location such as a sub-folder within your desired working directory. 
+
+A manifest file is a file that contains three, and only three, categories. ‘sampleID’, ‘absolute-filepath’, and ‘direction’. 
+
+THESE HEADERS MUST BE IN THIS EXACT FORMAT AND CAPITALIZATION FOR THIS TO WORK. 
+
+If your manifest file has some type of error you will know very quickly. This will likely be your first chance to diagnose errors within QIIME itself, as it is very easy for this to go incorrectly. Some information that you will find useful.
+
+1. use a text csv file, also known as a .tsv . You can have an .xlsx or .csv file that you can upload online and redownload in a .tsv format (this is the easiest way I have found to do this).
+
+2. to find a filepath is not as straightforward as it may seem sometimes. There are different methods you need to use for different operating systems but here is an example of a correct and incorrect filepath in this case. Let’s say, we are wanting the filepath for the sample ID LLSP_01, we need to match the sample ID to the filepath so we need to go find that file and get the filepath.
+
+INCORRECT – does not go directly to the file
+
+/home/tally/Desktop/newt_ttx/.fastq.gz
+
+CORRECT – directed directly to file
+/home/tally/Desktop/newt_ttx/20230711_LSSP01_JW11270_S1_R1_001.fastq.gz
+ 
+Notice the difference between those filepaths, and understand you will need the absolute filepath for EACH AND EVERY SAMPLE to correspond.
+
+
+Here is an example of my manifest
+
+
+sample-id
+absolute-filepath
+direction
+LSSP-01
+/home/tally/Desktop/newt_ttx/20230711_LSSP01_JW11270_S1_R1_001.fastq.gz
+Forward
+GRP-23
+/home/tally/Desktop/newt_ttx/20230711_GRP23_JW11270_S2_R1_001.fastq.gz
+Forward
+SLNF-08
+/home/tally/Desktop/newt_ttx/20230711_SLNF08_JW11270_S3_R1_001.fastq.gz
+Forward
+WBC-01
+/home/tally/Desktop/newt_ttx/20230711_WBC01_JW11270_S4_R1_001.fastq.gz
+Forward
+FCSP-02
+/home/tally/Desktop/newt_ttx/20230711_FCSP02_JW11270_S5_R1_001.fastq.gz
+Forward
+
+
+You must create one that works exactly like this but for your files and file organization. Please keep in mind there are easy ways to alter things if you mess up, find and replace can help you change many things at once so if you, say change your files to a new location you can search and replace within your manifest itself and change every entry at once. Easy!
+
+If you make alterations to your manifest you will likely have to re-download it as a new .tsv, or at least in my case that solved all my issues with manifests but your issues could be different. Importing is often one of the hardest steps in QIIME so don’t get too upset if this takes some time. 
+
+
+
+Always remember the two golden rules of Bioinformatics and Statistics
+
+YOU ALWAYS CHECK THE NUMBER OF INSTANCES THAT WENT IN IS THE NUMBER OF INSTANCES THAT CAME OUT
+
+AN HOUR IN THE FIELD IS A DAY IN THE LAB
+
+So now that you have your manifest file created, mapped, and checked an uncountable amount of times, you are ready to import into QIIME
+
+7) Importing Sequence Data into QIIME:
+
+qiime tools import –-help
+
+Usage: qiime tools import [OPTIONS]
+
+  Import data to create a new QIIME 2 Artifact. See https://docs.qiime2.org/
+  for usage examples and details on the file types and associated semantic
+  types that can be imported.
+
+Options:
+  --type TEXT             			The semantic type of the artifact that will be created upon 							importing. Use –show-importable-types to see what 							importable semantic types are available in the current 							deployment. [required]
+  --input-path PATH       			Path to file or directory that should be imported. [required]
+
+  --output-path ARTIFACT  			Path where output artifact should be written. [required]
+
+  --input-format TEXT     			The format of the data to be imported. If not provided, data 						must be in the 	format expected by the  semantic type 							provided via –type.
+
+  --show-importable-types 			Show the semantic types that can be supplied to  --type to 							import data into an artifact.
+
+  --show-importable-formats			Show formats that can be supplied to –input-format to 							import data into an artifact.
+  --help                  				Show this message and exit.
+
+
+quick note, for QIIME CLI there is two ways you can orient your script. I will illustrate both below for this importation step. But know that the backslash ‘ \ ’ can be used to indent and give a more vertical orientation if it at all helps you. BE AWARE that once you input a backslash into your code to give it a vertical output, you cannot go back and change the previous lines, so I recommend doing the linear version, then changing it to vertical when you are creating your QIIME notebook.
+Notice you must input “ 'SampleData[SequencesWithQuality]' “ and “ SingleEndFastqManifestPhred33V2 ” exactly this way, but such things as the input files should be replaced with whatever your file names are.
+ 
+
+qiime tools import --type 'SampleData[SequencesWithQuality]' --input-path new_manifest.tsv --output-path new_newt_manifest.qza --input-format SingleEndFastqManifestPhred33V2
+
+or
+
+qiime tools import \
+--type 'SampleData[SequencesWithQuality]' \
+--input-path new_manifest.tsv \
+--output-path new_newt_manifest.qza \
+--input-format SingleEndFastqManifestPhred33V2
+
+this function outputs a QIIME artifact file (.qza) which QIIME will use for sequential steps in the workflow. You can ‘less’ this .qza file if you would like, but the terminal will output computer binary that will be of no use to human eyes. Therefore another step is necessary to output something useful for investigation.
+ 
+This step outputted a file named ‘new_newt_manifest.qza’ to the working directory location. You can, in fact, direct where you would like a file to be outputted simply by putting the file name. For example:
+
+--o-output-path [desired_directory_file_name]/new_newt_manifest.qza
+
+But this could be any file that is already created within your desired directory.
+
+Further, a useful tool to know before moving on is ‘peek’, which gives you the ability to inspect a file within your QIIME environment. Let’s look at our created file.
+
+8) Artifact Inspection
+
+qiime tools peek new_newt_manifest.qza
+
+UUID:        5f8703f4-1e9c-4128-b18e-d940edf16b28
+Type:        SampleData[SequencesWithQuality]
+Data format: SingleLanePerSampleSingleEndFastqDirFmt
+
+This actually gives us a great bit of info! This will be different for nearly every file that you create, but make sure you are able to understand the types of artifacts you will be working with because they can interchanged and used at different points in the process as long as you know what file you have, when it was created and what is the proper usage of that file. Don’t worry, you’ll get the hang of it. If you don’t know what type of artifact you need for a specific process, you can always look up what is needed using the [process] -- info
+Importing Data
+qiime tools import \
+--type 'SampleData[SequencesWithQuality]' \
+--input-path new_manifest.tsv \
+--output-path new_newt_manifest.qza \
+--input-format SingleEndFastqManifestPhred33V2
+This operation outputs a QIIME artifact file (.qza) which QIIME will use for sequential steps in the workflow. You can ‘less’ this .qza file if you would like, but the terminal will output computer binary that will be of no use to human eyes. Therefore another step is necessary to output something useful for investigation.
+One important thing to remember is that view.qiime2.org is a great place to see your visualization files, as well as look at any files that might be created throughout this workflow. Another few important commands are as follows.
+qiime demux summarize \
+--i-data new_newt_manifest.qza \
+--o-visualization new_newt_manifest.qzv
+
+qiime quality-filter q-score \
+--i-demux new_newt_manifest.qza \
+--o-filtered-sequences quality_filtered_sequences.qza \
+--o-filter-stats quality_filter_stats.qza
+
+qiime demux summarize \
+--i-data quality_filtered_sequences.qza \
+--o-visualization demux_filtered_sequence_stats_vis.qzv
+
+qiime deblur denoise-16S \
+--i-demultiplexed-seqs quality_filtered_sequences.qza \
+--p-trim-length 250 \
+--o-representative-sequences deblur_sequences.qza \
+--o-table deblur_table.qza \
+--p-jobs-to-start 8 \
+--p-sample-stats \
+--o-stats stats_deblur.qza
+
+qiime deblur visualize-stats \
+--i-deblur-stats Deblur_Products/stats_deblur.qza \
+--o-visualization Deblur_Products/deblur_stats_vis.qzv
+
+qiime feature-table tabulate-seqs \
+--i-data Deblur_Products/deblur_sequences.qza \
+--o-visualization Deblur_Products/feature_table_deblur.qzv
+
+qiime feature-table summarize \
+--i-table Deblur_Products/deblur_table.qza \
+--o-visualization table_deblur_vis.qzv \
+--m-sample-metadata-file new_newt_metadata.tsv
+
+qiime feature-classifier classify-sklearn \
+--i-classifier TJost_2023_Silva_classifier.qza \
+--p-n-jobs 1 --i-reads Deblur_Products/deblur_sequences.qza \
+--o-classification assigned_taxonomy/assigned_taxonomy_sequences.qza
+
+qiime metadata tabulate \
+--m-input-file assigned_taxonomy/assigned_taxonomy_sequences.qza \
+--o-visualization assigned_taxonomy/taxonomy_visualization.qzv
+qiime feature-table summarize \
+--i-table assigned_taxonomy/table_assigned_filtered.qza \
+--m-sample-metadata-file new_newt_metadata.tsv \
+--o-visualization assigned_taxonomy/vis_taxonomy_table.qzv
+
+qiime taxa filter-seqs \
+--i-sequences Deblur_Products/deblur_sequences.qza \
+--i-taxonomy assigned_taxonomy/assigned_taxonomy_sequences.qza \
+--p-exclude mitochondria,chloroplast,unassigned \
+--o-filtered-sequences assigned_taxonomy/filtered_sequences.qza
+
+qiime feature-table tabulate-seqs \
+--i-data assigned_taxonomy/filtered_sequences.qza \
+--o-visualization assigned_taxonomy/filtered_sequences.qzv
+
+qiime taxa filter-table \
+--i-table Deblur_Products/deblur_table.qza \
+--i-taxonomy assigned_taxonomy/assigned_taxonomy_sequences.qza \
+--p-exclude mitochondria,chloroplast,unassigned \
+--o-filtered-table assigned_taxonomy/table_assigned_filtered.qza
+
+qiime taxa barplot \
+--i-table assigned_taxonomy/table_assigned_filtered.qza \
+--i-taxonomy assigned_taxonomy/assigned_taxonomy_sequences.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--o-visualization Barplots/nochloro_barplot.qzv
+
+qiime feature-table filter-samples \
+--i-table removed_samples/negative-positive_absent.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--p-where "\"#SampleID\"NOT IN('Neg')AND \"#SampleID\"NOT IN('Pos')" \
+--o-filtered-table removed_samples/1_filtered_table.qza
+
+qiime taxa barplot \
+--i-table removed_samples/1_filtered_table.qza \
+--i-taxonomy assigned_taxonomy/assigned_taxonomy_sequences.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--o-visualization removed_samples/new_noposneg_barplot.qzv
+
+qiime phylogeny align-to-tree-mafft-fasttree \
+--i-sequences assigned_taxonomy/filtered_sequences.qza \
+--o-alignment removed_samples/fastree/aligned_seqs.qza \
+--o-masked-alignment removed_samples/fastree/masked_alignment.qza \
+--o-tree removed_samples/fastree/unrooted_tree.qza \
+--o-rooted-tree removed_samples/fastree/rooted_tree.qza
+
+qiime feature-table summarize \
+--i-table 1_filtered_table.qza \
+--o-visualization removed_table.qzv
+
+qiime tools peek negative-positive_absent.qza
+
+qiime demux summarize \
+--i-data negative-positive_absent.qza \
+--o-visualization negpos_summary.qzv
+
+qiime diversity alpha-rarefaction \
+--i-table removed_samples/1_filtered_table.qza \
+--i-phylogeny removed_samples/fastree/rooted_tree.qza \
+--p-max-depth 5200 \
+--p-steps 10 \
+--p-metrics mcintosh_e \
+--p-metrics mcintosh_d \
+--p-metrics margalef \
+--p-metrics lladser_pe \
+--p-metrics menhinick \
+--p-metrics michaelis_menten_fit \
+--p-metrics observed_features \
+--p-metrics robbins \
+--p-metrics simpson \
+--p-metrics simpson_e \
+--p-metrics singles \
+--m-metadata-file new_newt_metadata.tsv \
+--o-visualization removed_samples/5200_rarefaction/multi_2_5200_rarefaction.qzv
+
+Core-Metrics
+
+qiime diversity core-metrics-phylogenetic \
+--i-table removed_samples/1_filtered_table.qza \
+--i-phylogeny removed_samples/fastree/rooted_tree.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--p-sampling-depth 5200 \
+--output-dir removed_samples/core_metrics
+
+qiime diversity alpha-group-significance \
+--i-alpha-diversity removed_samples/core_metrics/shannon_vector.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--o-visualization removed_samples/core_metrics/shannon_vis.qzv
+
+qiime diversity alpha-group-significance \
+--i-alpha-diversity removed_samples/core_metrics/faith_pd_vector.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--o-visualization removed_samples/core_metrics/faith_vis.qzv
+
+qiime diversity alpha-group-significance \
+--i-alpha-diversity removed_samples/core_metrics/observed_features_vector.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--o-visualization removed_samples/core_metrics/observed_vis.qzv
+
+qiime diversity alpha-group-significance \
+--i-alpha-diversity removed_samples/core_metrics/evenness_vector.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--o-visualization removed_samples/core_metrics/evenness_vis.qzv
+
+qiime feature-table summarize \
+--i-table removed_samples/core_metrics/rarefied_table.qza \
+--o-visualization removed_samples/core_metrics/summed_feature_table.qzv
+
+Alpha Diversity
+#Further removing samples after rarefaction that will throw off the analysis since they’re not in the file, therefore need to be removed from the tables.
+qiime feature-table filter-samples \
+--i-table removed_samples/1_filtered_table.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-where "\"#SampleID\"NOT IN('FCSP-05')AND\"#SampleID\"NOT IN('FCSP-09')AND\"#SampleID\"NOT IN('SLNF-01')AND\"#SampleID\"NOT IN('SLNF-10')AND\"#SampleID\"NOT IN('TMC-03')AND\"#SampleID\"NOT IN('WBC-06')" \
+--o-filtered-table removed_samples/all_removed_table_101623
+
+Alpha Diversity - Simpson
+qiime diversity alpha \
+--i-table removed_samples/all_removed_table_101623.qza \
+--p-metric simpson \
+--parallel \
+--o-alpha-diversity removed_samples/alpha/alphadiversity_simpson
+
+qiime metadata tabulate \
+--m-input-file removed_samples/alpha/alphadiversity_simpson.qza \
+--o-visualization removed_samples/alpha/tabulated_metadata_simpson
+
+qiime diversity alpha-group-significance \
+--i-alpha-diversity removed_samples/alpha/alphadiversity_simpson.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--o-visualization removed_samples/alpha/simpson_significance_vis
+
+Alpha Diversity - Shannon
+qiime diversity alpha \
+--i-table removed_samples/all_removed_table_101623.qza \
+--p-metric shannon \
+--parallel \
+--o-alpha-diversity removed_samples/alpha/alphadiversity_shannon
+
+qiime metadata tabulate \
+--m-input-file removed_samples/alpha/alphadiversity_shannon.qza \
+--o-visualization removed_samples/alpha/tabulated_metadata_shannon
+
+qiime diversity alpha-group-significance \
+--i-alpha-diversity removed_samples/alpha/alphadiversity_shannon.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--o-visualization removed_samples/alpha/shannon_significance_vis
+
+Beta-group significance - Bd Presence
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/core_metrics/bray_curtis/bray_curtis_distance_matrix.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--m-metadata-column Bd_Presence \
+--p-pairwise \
+--o-visualization removed_samples/core_metrics/bray_curtis_beta.qzv \
+--output-dir removed_samples/core_metrics/beta
+
+Beta-group significance - TTX
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/core_metrics/bray_curtis/bray_curtis_distance_matrix.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--m-metadata-column TTX_Real \
+--p-pairwise \
+--o-visualization removed_samples/core_metrics/TTX_bray_curtis_beta.qzv
+
+Removing N/A from TTX column
+
+qiime feature-table filter-samples \
+--i-table removed_samples/1_filtered_table.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--p-where "\"Predicted Whole Newt TTX (mg)\"NOT IN('NA')" \
+--o-filtered-table removed_samples/no_na_table.qza
+
+Confirmation table
+
+qiime feature-table summarize \
+--i-table removed_samples/no_na_table.qza \
+--o-visualization removed_samples/no_NA_table.qzv
+
+No N/A core metrics
+
+qiime diversity core-metrics-phylogenetic \
+--i-table removed_samples/no_na_table.qza \
+--i-phylogeny removed_samples/fastree/rooted_tree.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--p-sampling-depth 5200 \
+--output-dir removed_samples/new_core_metrics
+
+qiime diversity beta-correlation \
+--i-distance-matrix removed_samples/new_core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method spearman \
+--o-metadata-distance-matrix removed_samples/new_core_metrics/mantel/ttx_distance_matrix.qza \
+--o-mantel-scatter-visualization removed_samples/new_core_metrics/mantel/ttx_mantel_scatter_vis.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix removed_samples/new_core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-intersect-ids \
+--p-method pearson \
+--o-metadata-distance-matrix removed_samples/new_core_metrics/mantel/ttx_unweighted_pearson_distance_matrix.qza \
+--o-mantel-scatter-visualization removed_samples/new_core_metrics/mantel/ttx_pearson_unweighted.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix removed_samples/new_core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-intersect-ids \
+--p-method spearman \
+--o-metadata-distance-matrix removed_samples/new_core_metrics/mantel/ttx_unweighted_distance_matrix.qza \
+--o-mantel-scatter-visualization removed_samples/new_core_metrics/mantel/ttx_spearman_unweighted.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix removed_samples/new_core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Bd' \
+--p-intersect-ids \
+--p-method pearson \
+--o-metadata-distance-matrix removed_samples/new_core_metrics/mantel/bd_pearson_weighted_distance_matrix.qza \
+--o-mantel-scatter-visualization removed_samples/new_core_metrics/mantel/bd_pearson_weighted_sig.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix removed_samples/new_core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Bd' \
+--p-intersect-ids \
+--p-method spearman \
+--o-metadata-distance-matrix removed_samples/new_core_metrics/mantel/bd_weighted_distance_matrix.qza \
+--o-mantel-scatter-visualization removed_samples/new_core_metrics/mantel/bd_spearman_weighted_sig.qzv
+
+qiime diversity beta-correlation 
+--i-distance-matrix removed_samples/new_core_metrics/unweighted_unifrac_distance_matrix.qza 
+--m-metadata-file na_no_metadata.tsv 
+--m-metadata-column 'Bd' 
+--p-intersect-ids 
+--p-method spearman 
+--o-metadata-distance-matrix removed_samples/new_core_metrics/mantel/bd_unweighted_spearman_distance_matrix.qza 
+--o-mantel-scatter-visualization removed_samples/new_core_metrics/mantel/bd_spearman_unweighted.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix removed_samples/new_core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Bd' \
+--p-intersect-ids \
+--p-method pearson \
+--o-metadata-distance-matrix removed_samples/new_core_metrics/mantel/bd_unweighted_pearson_distance_matrix.qza \
+--o-mantel-scatter-visualization removed_samples/new_core_metrics/mantel/bd_pearson_unweighted.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix removed_samples/new_core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-intersect-ids \
+--p-method spearman \
+--o-metadata-distance-matrix removed_samples/new_core_metrics/mantel/ttx_jaccard_spearman_distance_matrix.qza \
+--o-mantel-scatter-visualization removed_samples/new_core_metrics/mantel/ttx_spearman_jaccard_vis.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix removed_samples/new_core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-intersect-ids \
+--p-method pearson \
+--o-metadata-distance-matrix removed_samples/new_core_metrics/mantel/ttx_jaccard_pearson_distance_matrix.qza \
+--o-mantel-scatter-visualization removed_samples/new_core_metrics/mantel/ttx_pearson_jaccard_vis.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix removed_samples/new_core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Bd’ \
+--p-intersect-ids \
+--p-method pearson \
+--o-metadata-distance-matrix removed_samples/new_core_metrics/mantel/bd_jaccard_pearson_distance_matrix.qza \
+--o-mantel-scatter-visualization removed_samples/new_core_metrics/mantel/bd_pearson_jaccard_vis.qzv
+
+ qiime diversity beta-correlation \
+--i-distance-matrix removed_samples/new_core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Bd' \
+--p-intersect-ids \
+--p-method spearman \
+--o-metadata-distance-matrix removed_samples/new_core_metrics/mantel/bd_jaccard_spearman_distance_matrix.qza \
+--o-mantel-scatter-visualization removed_samples/new_core_metrics/mantel/bd_spearman_jaccard_vis.qzv
+
+No N/A beta-diversity metrics - Bd
+I had some issues with this analysis, I had to remove samples from a new metadata file for it to work. They were missing form the table originally either eliminated by the upstream QIIME processes or by selection for one reason or another.
+qiime diversity beta-correlation \
+--i-distance-matrix removed_samples/new_core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method spearman \
+--o-metadata-distance-matrix removed_samples/new_core_metrics/mantel/distance_matrix.qza \
+--o-mantel-scatter-visualization removed_samples/new_core_metrics/mantel/mantel_scatter_vis.qzv
+
+Beta Diversity significance
+
+Beta-group significance - Site
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Site' \
+--o-visualization removed_samples/new_core_metrics/bray_curtis/site_significance_bc_all.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method anosim \
+--m-metadata-column 'Site' \
+--o-visualization removed_samples/new_core_metrics/bray_curtis/anosim_site_significance_bc_all.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method permdisp \
+--m-metadata-column 'Site' \
+--o-visualization removed_samples/new_core_metrics/bray_curtis/permdisp_site_significance_bc_all.qzv
+
+Beta-group significance - Bray-Curtis
+
+PERMDISP
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method permdisp \
+--m-metadata-column 'Site' \
+--o-visualization removed_samples/new_core_metrics/bray_curtis/permdisp_site_significance_bc_all.qzv
+
+PERMDISP - Pairwise
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method permdisp \
+--p-pairwise \
+--m-metadata-column 'Site' \
+--o-visualization removed_samples/new_core_metrics/bray_curtis/pairwise_permdisp_site_significance_bc_all.qzv
+
+ANOSIM
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method anosim \
+--m-metadata-column 'Site' \
+--o-visualization removed_samples/new_core_metrics/bray_curtis/anosim_site_significance_bc_all.qzv
+
+ANOSIM - Pairwise
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method anosim \
+--p-pairwise \
+--m-metadata-column 'Site' \
+--o-visualization removed_samples/new_core_metrics/bray_curtis/pairwise_anosim_site_significance_bc_all.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/bray_curtis_distance_matrix.qza \
+ --m-metadata-file na_no_metadata.tsv \
+--p-method anosim \
+--p-pairwise \
+--m-metadata-column 'Bd_Real' \
+--o-visualization removed_samples/new_core_metrics/bray_curtis/pairwise_anosim_bd_real_significance_bc_all.qzv
+
+
+PERMANOVA
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Site' \
+--o-visualization removed_samples/new_core_metrics/bray_curtis/site_significance_bc_all.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method permanova \
+--m-metadata-column 'Bd_Real' \
+--o-visualization removed_samples/new_core_metrics/bray_curtis/permanova_bd_real_significance_bc_all.qzv
+
+PERMANOVA - Pairwise
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Site' \
+--p-method permanova \
+--p-pairwise \
+--o-visualization removed_samples/new_core_metrics/bray_curtis/pairwise_site_significance_bc_all.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method permanova \
+--p-pairwise \
+--m-metadata-column 'Bd_Real' \
+--o-visualization removed_samples/new_core_metrics/bray_curtis/pairwise_permanova_bd_real_significance_bc_all.qzv
+
+Beta-group significance - Unweighted unifrac by Site
+
+ANOSIM
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method anosim \
+--m-metadata-column 'Site' \
+--o-visualization removed_samples/new_core_metrics/unweighted/anosim_bd-presence_significance_unweighted_all.qzv
+
+ANOSIM - Pairwise
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method anosim \
+--p-pairwise \
+--m-metadata-column 'Site' \
+--o-visualization removed_samples/new_core_metrics/unweighted/pairwise_anosim_site_significance_unweighted_all.qzv
+
+PERMANOVA
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method permanova \
+--m-metadata-column 'Site' \
+--o-visualization removed_samples/new_core_metrics/unweighted/permanova_site_significance_unweighted_all.qzv
+
+PERMANOVA - Pairwise
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method permanova \
+--p-pairwise \
+--m-metadata-column 'Site' \
+--o-visualization removed_samples/new_core_metrics/unweighted/pairwise_permanova_site_significance_unweighted_all.qzv
+
+PERMDISP
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method permdisp \
+--m-metadata-column 'Site' \
+--o-visualization removed_samples/new_core_metrics/unweighted/permdisp_site_significance_unweighted_all.qzv
+
+PERMDISP - pairwise
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method permdisp \
+--p-pairwise \
+--m-metadata-column 'Site' \
+--o-visualization removed_samples/new_core_metrics/unweighted/pairwise_site_significance_unweighted_all.qzv
+
+Beta-group significance - Unweighted unifrac by TTX
+
+ANOSIM
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method anosim --m-metadata-column 'TTX_Real' \
+--o-visualization removed_samples/new_core_metrics/unweighted/anosim_ttx_significance_unweighted_all.qzv
+
+ANOSIM - pairwise
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method anosim \
+--p-pairwise \
+--m-metadata-column 'TTX_Real' \
+--o-visualization removed_samples/new_core_metrics/unweighted/pairwise_anosim_ttx_significance_unweighted_all.qzv
+
+PERMDISP
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method permdisp \
+--m-metadata-column 'TTX_Real' \
+--o-visualization removed_samples/new_core_metrics/unweighted/permdisp_ttx_significance_unweighted_all.qzv
+
+[no pairwise possible for permdisp]
+
+PERMANOVA
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method permanova \
+--m-metadata-column 'TTX_Real' \
+--o-visualization removed_samples/new_core_metrics/unweighted/permanova_ttx_significance_unweighted_all.qzv
+
+PERMANOVA - PAIRWISE
+
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method permanova \
+--p-pairwise \
+--m-metadata-column 'TTX_Real' \
+--o-visualization removed_samples/new_core_metrics/unweighted/pairwise_permanova_ttx_significance_unweighted_all.qzv
+qiime diversity beta-group-significance \
+--i-distance-matrix removed_samples/new_core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-method permanova \
+--p-pairwise \
+--m-metadata-column 'Bd_Real' \
+--o-visualization removed_samples/new_core_metrics/unweighted/pairwise_permanova_bd_real_significance_unweighted_all.qzv
+
+Overall Beta-Correlation: Weighted-Unifrac
+qiime diversity beta-group-significance \
+--i-distance-matrix weighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-pairwise --m-metadata-column 'Site' \
+--p-method permanova \
+--o-visualization weighted/site_permanova_weighted_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix weighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-pairwise --m-metadata-column 'Site' \
+--p-method permdisp \
+--o-visualization weighted/site_permdisp_weighted_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix weighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-pairwise --m-metadata-column 'Site' \
+--p-method anosim \
+--o-visualization weighted/site_anosim_weighted_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix weighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'Bd_Real' \
+--p-method anosim \
+--o-visualization weighted/bd_anosim_weighted_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix weighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'Bd_Real' \
+--p-method permanova \
+--o-visualization weighted/bd_permanova_weighted_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix weighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'Bd_Real' \
+--p-method permdisp \
+--o-visualization weighted/bd_permdisp_weighted_sig.qzv
+
+qiime diversity beta-group-significance \ 
+--i-distance-matrix weighted_unifrac_distance_matrix.qza  \
+--m-metadata-file na_no_metadata.tsv \ 
+--p-pairwise \
+--m-metadata-column 'TTX_Real' \
+--p-method permdisp \
+--o-visualization weighted/ttx_permdisp_weighted_sig.qzv
+
+qiime diversity beta-group-significance  \
+--i-distance-matrix weighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \ 
+--p-pairwise --m-metadata-column 'TTX_Real' \
+--p-method permanova \
+--o-visualization weighted/ttx_permanova_weighted_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix weighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'TTX_Real' \
+--p-method anosim \
+--o-visualization weighted/ttx_anosim_weighted_sig.qzv
+
+Overall Beta-Correlation: Jaccard
+
+qiime diversity beta-group-significance \
+--i-distance-matrix jaccard_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'Site' \
+--p-method anosim \
+--o-visualization jaccard/site_anosim_jaccard_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix jaccard_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-pairwise --m-metadata-column 'Site' \
+--p-method permanova \
+--o-visualization jaccard/site_permanova_jaccard_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix jaccard_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'Site' \
+--p-method permdisp \
+--o-visualization jaccard/site_permdisp_jaccard_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix jaccard_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'TTX_Real' \
+--p-method permdisp \
+--o-visualization jaccard/ttx_permdisp_jaccard_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix jaccard_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'TTX_Real' \
+--p-method permanova \
+--o-visualization jaccard/ttx_permanova_jaccard_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix jaccard_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \ 
+--p-pairwise \
+--m-metadata-column 'TTX_Real' \ 
+--p-method anosim \
+--o-visualization jaccard/ttx_anosim_jaccard_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix jaccard_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'Bd_Real' \
+--p-method anosim \
+--o-visualization jaccard/bd_anosim_jaccard_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix jaccard_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'Bd_Real' \
+--p-method permdisp \
+--o-visualization jaccard/bd_permdisp_jaccard_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix jaccard_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'Bd_Real' \
+--p-method permanova \
+--o-visualization jaccard/bd_permanova_jaccard_sig.qzv
+
+
+[New Dataset] removing neg,pos,N/A-ttx,no-bd
+
+qiime feature-table filter-samples \
+--i-table removed_samples/negative-positive_absent.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--p-where "\"#SampleID\"NOT IN('Neg')AND \"#SampleID\"NOT IN('Pos')" \
+--o-filtered-table all_ttx/new_table.qza
+
+removing the sample that does not have TTX
+
+qiime feature-table filter-samples \
+--i-table all_ttx/new_table.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--p-where "\"#SampleID\"NOT IN('FCSP-05')" \
+--o-filtered-table all_ttx/1_new_table.qza
+
+qiime taxa barplot \
+--i-table all_ttx/1_new_table.qza \
+--i-taxonomy assigned_taxonomy/assigned_taxonomy_sequences.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--o-visualization all_ttx/trial_barplot
+
+Removing 0-Bd samples
+
+qiime feature-table filter-samples \
+--i-table all_ttx/1_new_table.qza \
+--p-where '[Bd_Presence]="1"' \
+--m-metadata-file new_newt_metadata.tsv \
+--o-filtered-table all_ttx/noBd_table.qza
+
+all_ttx-0_Bd Core-Metrics
+
+qiime diversity core-metrics-phylogenetic \
+--i-table all_ttx/noBd_table.qza \
+--i-phylogeny removed_samples/fastree/rooted_tree.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--p-sampling-depth 5200 \
+--output-dir all_ttx/fasttree/
+
+qiime diversity alpha-group-significance \
+--i-alpha-diversity all_ttx/core_metrics/shannon/shannon_vector.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--o-visualization all_ttx/core_metrics/shannon/faith_significance.qzv
+
+qiime diversity alpha-group-significance \
+--i-alpha-diversity all_ttx/core_metrics/bray_curtis/bray_curtis_pcoa_results.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--o-visualization all_ttx/core_metrics/bray_curtis/pcoa_result.qzv
+
+TMC
+
+Sub-setting by site - TMC
+
+qiime feature-table filter-samples \
+--i-table removed_samples/1_filtered_table.qza \
+--p-where '[Site]="TMC"' \
+--m-metadata-file new_newt_metadata.tsv \
+--output-dir TMC_Dataset \
+--o-filtered-table tmc_only_table.qza
+
+qiime feature-table summarize \
+--i-table TMC_Dataset/tmc_only_table.qza \
+--o-visualization TMC_Dataset/TMC_only_visualization.qzv
+
+TMC core-metrics
+
+qiime diversity core-metrics-phylogenetic \
+--i-table TMC_Dataset/tmc_only_table.qza \
+--i-phylogeny removed_samples/fastree/rooted_tree.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--p-sampling-depth 5200 \
+--output-dir TMC_Dataset/core_metrics
+
+TMC beta-group significance
+
+qiime diversity beta-group-significance \
+--i-distance-matrix TMC_Dataset/core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--m-metadata-column Bd_Presence \
+--p-pairwise \
+--o-visualization TMC_Dataset/beta_significance.qzv \
+--output-dir TMC_Dataset/beta
+
+TMC beta-correlation: Mantel - Spearman
+
+qiime diversity beta-correlation \
+--i-distance-matrix TMC_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Bd' --p-method spearman \
+--p-intersect-ids \
+--o-metadata-distance-matrix TMC_Dataset/beta/mantel/bd_bc_spearman_distance_matrix.qza \
+--o-mantel-scatter-visualization TMC_Dataset/beta/mantel/bd_bc_spearman_mantel_viz.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix TMC_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method spearman \
+--p-intersect-ids \
+--o-metadata-distance-matrix TMC_Dataset/beta/mantel/ttx_bc_spearman_distance_matrix.qza \
+--o-mantel-scatter-visualization TMC_Dataset/beta/mantel/ttx_bc_spearman_mantel_viz.qzv
+
+TMC beta-correlation Mantel - Pearson
+
+qiime diversity beta-correlation \
+--i-distance-matrix TMC_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method pearson \
+--p-intersect-ids \
+--o-metadata-distance-matrix TMC_Dataset/beta/mantel/ttx_bc_pearson_distance_matrix.qza \
+--o-mantel-scatter-visualization TMC_Dataset/beta/mantel/ttx_bc_pearson_mantel_viz.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix TMC_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Bd' \
+--p-method pearson \
+--p-intersect-ids \
+--o-metadata-distance-matrix TMC_Dataset/beta/mantel/Bd_bc_pearson_distance_matrix.qza \
+--o-mantel-scatter-visualization TMC_Dataset/beta/mantel/Bd_bc_pearson_mantel_viz.qzv
+
+TMC Beta-Correlation: Bray-Curtis
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/ttx_bc_pw_permanova_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/ttx_bc_pw_permdisp_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/ttx_bc_pw_anosim_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+ --m-metadata-file tmc_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/bd_bc_pw_anosim_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/bd_bc_pw_permanova_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/bd_bc_pw_permdisp_sig.qzv
+
+TMC Beta-Correlation: Weighted-Unifrac
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/ttx_permanova_weighted_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/ttx_permdisp_weighted_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/ttx_anosim_weighted_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/bd_anosim_weighted_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/bd_permdisp_weighted_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/bd_permanova_weighted_sig.qzv
+
+TMC Beta-Correlation: Unweighted-Unifrac
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'Bd_Real' \
+--p-method permdisp \
+--o-visualization core_metrics/beta/bd_permdisp_unweighted_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'Bd_Real' \
+--p-method permanova \
+--o-visualization core_metrics/beta/bd_permanova_unweighted_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'Bd_Real' \
+--p-method anosim \
+--o-visualization core_metrics/beta/bd_anosim_unweighted_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'TTX_Real' \
+--p-method anosim --o-visualization core_metrics/beta/ttx_anosim_unweighted_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'TTX_Real' \
+--p-method permdisp \
+--o-visualization core_metrics/beta/ttx_permdisp_unweighted_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'TTX_Real' \
+--p-method permanova \
+--o-visualization core_metrics/beta/ttx_permanova_unweighted_sig.qzv
+
+TMC Beta-Correlation: Jaccard
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'Bd_Real' \
+--p-method anosim \
+--o-visualization core_metrics/beta/bd_anosim_jaccard_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'Bd_Real' \
+--p-method permanova \
+--o-visualization core_metrics/beta/bd_permanova_jaccard_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--p-pairwise \
+ --m-metadata-column 'Bd_Real' \
+--p-method permdisp \ 
+--o-visualization core_metrics/beta/bd_permdisp_jaccard_sig.qzv
+
+qiime diversity beta-group-significance \ 
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza  \
+--m-metadata-file tmc_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'TTX_Real' \
+--p-method permdisp \
+--o-visualization core_metrics/beta/ttx_permdisp_jaccard_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'TTX_Real' \
+--p-method permanova \
+--o-visualization core_metrics/beta/ttx_permanova_jaccard_sig.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file tmc_metadata.tsv \
+--p-pairwise \
+--m-metadata-column 'TTX_Real' \
+--p-method anosim \
+--o-visualization core_metrics/beta/ttx_anosim_jaccard_sig.qzv
+
+qiime diversity beta-correlation 
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza 
+--m-metadata-file tmc_metadata.tsv 
+--m-metadata-column 'Predicted whole newt TTX (mg)' 
+--p-intersect-ids 
+--p-method pearson 
+--o-metadata-distance-matrix core_metrics/mantel/ttx_pearson_weighted_dm.qza 
+--o-mantel-scatter-visualization core_metrics/mantel/ttx_pearson_weighted_vis.qzv
+
+qiime diversity beta-correlation 
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza 
+--m-metadata-file tmc_metadata.tsv 
+--m-metadata-column 'Predicted whole newt TTX (mg)' 
+--p-intersect-ids 
+--p-method spearman 
+--o-metadata-distance-matrix core_metrics/mantel/ttx_speaspearmanghted_dm.qza 
+--o-mantel-scatter-visualization core_metrics/mantel/ttx_spearman_weighted_vis.qzv
+
+qiime diversity beta-correlation 
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza 
+--m-metadata-file tmc_metadata.tsv 
+--m-metadata-column 'ZE.avg.Bd' 
+--p-intersect-ids 
+--p-method spearman 
+--o-metadata-distance-matrix core_metrics/mantel/bd_speaspearmanghted_dm.qza 
+--o-mantel-scatter-visualization core_metrics/mantel/bd_spearman_weighted_vis.qzv
+
+qiime diversity beta-correlation 
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza 
+--m-metadata-file tmc_metadata.tsv 
+--m-metadata-column 'ZE.avg.Bd' 
+--p-intersect-ids 
+--p-method pearson 
+--o-metadata-distance-matrix core_metrics/mantel/bd_spearson_weighted_dm.qza 
+--o-mantel-scatter-visualization core_metrics/mantel/bd_pearson_weighted_vis.qzv
+
+qiime diversity beta-correlation 
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza 
+--m-metadata-file tmc_metadata.tsv 
+--m-metadata-column 'ZE.avg.Bd' 
+--p-intersect-ids 
+--p-method pearson 
+--o-metadata-distance-matrix core_metrics/mantel/bd_spearson_unweighted_dm.qza 
+--o-mantel-scatter-visualization core_metrics/mantel/bd_pearson_unweighted_vis.qzv
+
+qiime diversity beta-correlation 
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza 
+--m-metadata-file tmc_metadata.tsv 
+--m-metadata-column 'ZE.avg.Bd' 
+--p-intersect-ids 
+--p-method spearman 
+--o-metadata-distance-matrix core_metrics/mantel/bd_spearman_unweighted_dm.qza 
+--o-mantel-scatter-visualization core_metrics/mantel/bd_spearman_unweighted_vis.qzv
+
+qiime diversity beta-correlation 
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza 
+--m-metadata-file tmc_metadata.tsv 
+--m-metadata-column 'Predicted whole newt TTX (mg)' 
+--p-intersect-ids 
+--p-method spearman 
+--o-metadata-distance-matrix core_metrics/mantel/ttx_spearman_unweighted_dm.qza 
+--o-mantel-scatter-visualization core_metrics/mantel/ttx_spearman_unweighted_vis.qzv
+
+qiime diversity beta-correlation 
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza 
+--m-metadata-file tmc_metadata.tsv 
+--m-metadata-column 'Predicted whole newt TTX (mg)' 
+--p-intersect-ids 
+--p-method pearson 
+--o-metadata-distance-matrix core_metrics/mantel/ttx_pearson_unweighted_dm.qza 
+--o-mantel-scatter-visualization core_metrics/mantel/ttx_pearson_unweighted_vis.qzv
+
+qiime diversity beta-correlation 
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza 
+--m-metadata-file tmc_metadata.tsv 
+--m-metadata-column 'Predicted whole newt TTX (mg)' 
+--p-intersect-ids 
+--p-method pearson 
+--o-metadata-distance-matrix core_metrics/mantel/ttx_pearson_jaccard_dm.qza 
+--o-mantel-scatter-visualization core_metrics/mantel/ttx_pearson_jaccard_vis.qzv
+
+qiime diversity beta-correlation 
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza 
+--m-metadata-file tmc_metadata.tsv 
+--m-metadata-column 'Predicted whole newt TTX (mg)' 
+--p-intersect-ids 
+--p-method spearman 
+--o-metadata-distance-matrix core_metrics/mantel/ttx_spearman_jaccard_dm.qza 
+--o-mantel-scatter-visualization core_metrics/mantel/ttx_spearman_jaccard_vis.qzv
+
+qiime diversity beta-correlation 
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza 
+--m-metadata-file tmc_metadata.tsv 
+--m-metadata-column 'ZE.avg.Bd' 
+--p-intersect-ids 
+--p-method spearman 
+--o-metadata-distance-matrix core_metrics/mantel/bd_spearman_jaccard_dm.qza 
+--o-mantel-scatter-visualization core_metrics/mantel/bd_spearman_jaccard_vis.qzv
+
+qiime diversity beta-correlation 
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza 
+--m-metadata-file tmc_metadata.tsv 
+--m-metadata-column 'ZE.avg.Bd' 
+--p-intersect-ids 
+--p-method pearson 
+--o-metadata-distance-matrix core_metrics/mantel/bd_pearson_jaccard_dm.qza 
+--o-mantel-scatter-visualization core_metrics/mantel/bd_pearson_jaccard_vis.qzv
+
+
+FSCP
+Sub-setting by site – FSCP
+small typo in the metadata with the site for ‘FCSP’ being ‘FSCP’, but rather than changing the metadata and risking corrupting the .tsv file I just worked with the typo itself.
+
+qiime feature-table filter-samples \
+--i-table removed_samples/1_filtered_table.qza \
+--p-where '[Site]="FSCP"' \
+--m-metadata-file new_newt_metadata.tsv \
+--output-dir FCSP_Dataset \
+--o-filtered-table fcsp_only_table.qza
+
+qiime feature-table summarize \
+--i-table FCSP_Dataset/fcsp_only_table.qza \
+--o-visualization FCSP_Dataset/Fcsp_table_vis.qzv
+
+FCSP core-metrics
+
+qiime diversity core-metrics-phylogenetic \
+--i-table FCSP_Dataset/fcsp_only_table.qza \
+--i-phylogeny removed_samples/fastree/rooted_tree.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--p-sampling-depth 5200 \
+--output-dir FCSP_Dataset/core_metrics
+
+FCSP beta-correlation: Mantel
+qiime diversity beta-correlation \
+--i-distance-matrix FCSP_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method spearman \
+--p-intersect-ids \
+--o-metadata-distance-matrix FCSP_Dataset/core_metrics/mantel/ttx_bc_spearman_distance_matrix.qza \
+--o-mantel-scatter-visualization FCSP_Dataset/core_metrics/mantel/ttx_bc_spearman_mantel_scatter_vis.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix FCSP_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Bd' \
+--p-method spearman \
+--p-intersect-ids \
+--o-metadata-distance-matrix FCSP_Dataset/core_metrics/mantel/bd_bc_spearman_distance_matrix.qza \
+--o-mantel-scatter-visualization FCSP_Dataset/core_metrics/mantel/bd_bc_spearman_mantel_scatter_vis.qzv
+qiime diversity beta-correlation \
+--i-distance-matrix FCSP_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method pearson \
+--p-intersect-ids \
+--o-metadata-distance-matrix FCSP_Dataset/core_metrics/mantel/pearson/ttx_bc_pearson_distance_matrix.qza \
+--o-mantel-scatter-visualization FCSP_Dataset/core_metrics/mantel/pearson/ttx_bc_pearson_mantel_scatter_vis.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix FCSP_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Bd' \
+--p-method pearson \
+--p-intersect-ids \
+--o-metadata-distance-matrix FCSP_Dataset/core_metrics/mantel/pearson/bd_bc_pearson_distance_matrix.qza \
+--o-mantel-scatter-visualization FCSP_Dataset/core_metrics/mantel/pearson/bd_bc_pearson_mantel_scatter_vis.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method spearman \
+--p-intersect-ids \
+--o-metadata-distance-matrix core_metrics/beta/ttx_spearman_distance_matrix.qzv \
+--o-mantel-scatter-visualization core_metrics/beta/ttx_spearman_unweighted.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method pearson \
+--p-intersect-ids \
+--o-metadata-distance-matrix core_metrics/beta/ttx_pearson_distance_matrix.qzv \
+--o-mantel-scatter-visualization core_metrics/beta/ttx_pearson_unweighted.qzv
+qiime diversity beta-correlation \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method pearson \
+--p-intersect-ids \
+--o-metadata-distance-matrix core_metrics/beta/ttx_pearson_weighted_distance_matrix.qzv \
+--o-mantel-scatter-visualization core_metrics/beta/ttx_pearson_weighted.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method spearman \
+--p-intersect-ids \
+--o-metadata-distance-matrix core_metrics/beta/ttx_spearman_weighted_distance_matrix.qzv \
+--o-mantel-scatter-visualization core_metrics/beta/ttx_spearman_weighted.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method pearson \
+--p-intersect-ids \
+--o-metadata-distance-matrix core_metrics/beta/ttx_pearson_weighted_distance_matrix.qzv \
+--o-mantel-scatter-visualization core_metrics/beta/ttx_pearson_weighted.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method pearson \
+--p-intersect-ids \
+--o-metadata-distance-matrix core_metrics/beta/ttx_pearson_jaccard_distance_matrix.qzv \
+--o-mantel-scatter-visualization core_metrics/beta/ttx_pearson_jaccard.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method spearman \
+--p-intersect-ids \
+--o-metadata-distance-matrix core_metrics/beta/ttx_spearman_jaccard_distance_matrix.qzv \
+--o-mantel-scatter-visualization core_metrics/beta/ttx_spearman_jaccard.qzv
+FCSP Beta-Diversity: Bray-Curtis
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file fcsp_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pairwise_anosim_ttx_real_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file fcsp_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pairwise_permdisp_ttx_real_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file fcsp_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pairwise_permanova_ttx_real_significance.qzv
+
+FCSP Beta-Diversity: Unweighted-Unifrac
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file fcsp_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pw_permanova_unweighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file fcsp_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pw_permdisp_unweighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file fcsp_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pw_anosim_unweighted_significance.qzv
+
+FCSP Beta-Diversity: Weighted-Unifrac
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file fcsp_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pw_permdisp_weighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file fcsp_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pw_permanova_weighted_significance.qzv
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file fcsp_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pw_anosim_weighted_significance.qzv
+
+FCSP Beta-Diversity: Jaccard
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file fcsp_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pw_anosim_jaccard_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file fcsp_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pw_permanova_jaccard_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file fcsp_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pw_permdisp_jaccard_significance.qzv
+
+WBC
+
+Sub-setting by site – WBC
+
+qiime feature-table filter-samples \
+--i-table removed_samples/1_filtered_table.qza \
+--p-where '[Site]="WBC"' \
+--m-metadata-file new_newt_metadata.tsv \
+--output-dir WBC_Dataset \
+--o-filtered-table wbc_only_table.qza
+
+qiime feature-table summarize \
+--i-table WBC_Dataset/wbc_only_table.qza \
+--o-visualization WBC_Dataset/Wbc_table_vis.qzv
+
+WBC core-metrics
+
+qiime diversity core-metrics-phylogenetic \
+--i-table WBC_Dataset/wbc_only_table.qza \
+--i-phylogeny removed_samples/fastree/rooted_tree.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--p-sampling-depth 5200 \
+--output-dir WBC_Dataset/core_metrics
+
+WBC beta-correlation: Mantel - Pearson
+qiime diversity beta-correlation \
+--i-distance-matrix WBC_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Bd' \
+--p-method pearson \
+--p-intersect-ids \
+--o-metadata-distance-matrix WBC_Dataset/core_metrics/mantel/pearson/bd_bc_pearson_distance_matrix.qza \
+--o-mantel-scatter-visualization WBC_Dataset/core_metrics/mantel/pearson/bd_bc_pearson_mantel_vis.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix WBC_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method pearson \
+--p-intersect-ids \
+--o-metadata-distance-matrix WBC_Dataset/core_metrics/mantel/pearson/ttx_bc_pearson_distance_matrix.qza \
+--o-mantel-scatter-visualization WBC_Dataset/core_metrics/mantel/pearson/ttx_bc_pearson_mantel_vis.qzv
+
+WBC Beta-Correlation: Mantel - spearman
+qiime diversity beta-correlation \
+--i-distance-matrix WBC_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method spearman \
+--p-intersect-ids \
+--o-metadata-distance-matrix WBC_Dataset/core_metrics/mantel/spearman/ttx_bc_spearman_distance_matrix.qza \
+--o-mantel-scatter-visualization WBC_Dataset/core_metrics/mantel/spearman/ttx_bc_spearman_mantel_vis.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix WBC_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Bd' \
+--p-method spearman \
+--p-intersect-ids \
+--o-metadata-distance-matrix WBC_Dataset/core_metrics/mantel/spearman/bd_bc_spearman_distance_matrix.qza \
+--o-mantel-scatter-visualization WBC_Dataset/core_metrics/mantel/spearman/bd_bc_spearman_mantel_vis.qzv
+
+WBC Beta-Diversity: Bray-Curtis
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pw_permanova_bc_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pw_ttx_permdisp_bc_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pw_ttx_anosim_bc_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pw_bd_permdisp_bc_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pw_bd_permanova_bc_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise --p-method anosim \
+--o-visualization core_metrics/beta/pw_bd_anosim_bc_significance.qzv
+
+WBC Beta-Diversity: Unweighted-Unifrac
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pw_bd_permdisp_unweighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pw_bd_permanova_unweighted_significance.qzv
+
+qiime diversity beta-group-significance \ 
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pw_bd_anosim_unweighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pw_ttx_anosim_unweighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pw_ttx_permanova_unweighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pw_ttx_permdisp_unweighted_significance.qzv
+
+WBC Beta-Diversity: Weighted-Unifrac
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pw_ttx_permdisp_weighted_significance.qzv
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pw_ttx_permanova_weighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pw_ttx_anosim_weighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pw_bd_anosim_weighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pw_bd_permdisp_weighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pw_bd_permanova_weighted_significance.qzv
+
+WBC Beta-Diversity: Jaccard
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pw_bd_permanova_jaccard_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pw_bd_permdisp_jaccard_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pw_bd_permdisp_anosim_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pw_ttx_anosim_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pw_ttx_permdisp_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file wbc_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pw_ttx_permanova_significance.qzv
+
+
+
+GRP
+
+Sub-setting by site – GRP
+qiime feature-table filter-samples \
+--i-table removed_samples/1_filtered_table.qza \
+--p-where '[Site]="GRP"' \
+--m-metadata-file new_newt_metadata.tsv \
+--output-dir GRP_Dataset \
+--o-filtered-table grp_only_table.qza
+
+qiime feature-table summarize \
+--i-table GRP_Dataset/grp_only_table.qza \
+--o-visualization GRP_Dataset/Grp_table_vis.qzv
+
+GRP core-metrics
+
+qiime diversity core-metrics-phylogenetic \
+--i-table GRP_Dataset/grp_only_table.qza \
+--i-phylogeny removed_samples/fastree/rooted_tree.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--p-sampling-depth 5200 \
+--output-dir GRP_Dataset/core_metrics
+GRP Alpha Diversity - Shannon
+qiime diversity alpha \
+--i-table grp_only_table.qza \
+--p-metric shannon --parallel \
+--o-alpha-diversity alpha/grp_shannon_alpha_diversity
+
+qiime metadata tabulate \
+--m-input-file alpha/grp_shannon_alpha_diversity.qza \
+--o-visualization alpha/shannon_diversity
+
+qiime diversity alpha-group-significance \
+--i-alpha-diversity alpha/grp_shannon_alpha_diversity.qza \
+--m-metadata-file grp_metadata.tsv \
+--o-visualization alpha/significance_shannon_grp
+
+GRP Alpha Diversity - Simpson
+
+GRP beta-correlation: Mantel - spearman
+
+qiime diversity beta-correlation \
+--i-distance-matrix GRP_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv --m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method spearman \
+--p-intersect-ids \
+--o-metadata-distance-matrix GRP_Dataset/core_metrics/mantel/ttx_spearman_mantel.qza \
+--o-mantel-scatter-visualization GRP_Dataset/core_metrics/mantel/ttx_spearman_mantel_scatter_vis.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix GRP_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Bd' \
+--p-method spearman \
+--p-intersect-ids \
+--o-metadata-distance-matrix GRP_Dataset/core_metrics/mantel/bd_spearman_mantel.qza \
+--o-mantel-scatter-visualization GRP_Dataset/core_metrics/mantel/bd_spearman_mantel_scatter_vis.qzv
+
+GRP beta-correlation: Mantel – pearson
+qiime diversity beta-correlation \
+--i-distance-matrix GRP_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method pearson \
+--p-intersect-ids \
+--o-metadata-distance-matrix GRP_Dataset/core_metrics/mantel/ttx_pearson_mantel.qza \
+--o-mantel-scatter-visualization GRP_Dataset/core_metrics/mantel/ttx_pearson_mantel_scatter_vis.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix GRP_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Bd' \
+--p-method pearson \
+--p-intersect-ids \
+--o-metadata-distance-matrix GRP_Dataset/core_metrics/mantel/bd_mantel.qza \
+--o-mantel-scatter-visualization GRP_Dataset/core_metrics/mantel/bd_pearson_mantel_scatter_vis.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file grp_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-intersect-ids \
+--p-method spearman \
+--o-metadata-distance-matrix core_metrics/mantel/ttx_spearman_jac_dm.qza \
+--o-mantel-scatter-visualization core_metrics/mantel/ttx_spearman_jaccard_vis.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file grp_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-intersect-ids \
+--p-method pearson \
+--o-metadata-distance-matrix core_metrics/mantel/ttx_pearson_jac_dm.qza \
+--o-mantel-scatter-visualization core_metrics/mantel/ttx_pearson_jaccard_vis.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file grp_metadata.tsv \
+--m-metadata-column 'Bd' \
+--p-intersect-ids \
+--p-method pearson \
+--o-metadata-distance-matrix core_metrics/mantel/bd_pearson1_jac_dm.qza \
+--o-mantel-scatter-visualization core_metrics/mantel/bd_pearson_jaccard_vis.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file grp_metadata.tsv \
+--m-metadata-column 'Bd' \
+--p-intersect-ids \
+--p-method spearman \
+--o-metadata-distance-matrix core_metrics/mantel/bd_pearson_jac_dm.qza \
+--o-mantel-scatter-visualization core_metrics/mantel/bd_spearman_jaccard_vis.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file grp_metadata.tsv \
+--m-metadata-column 'Bd' \
+--p-intersect-ids \
+--p-method spearman \
+--o-metadata-distance-matrix core_metrics/mantel/bd_spearman_distance_matrix.qza \
+--o-mantel-scatter-visualization core_metrics/mantel/bd_spearman_weighted_vis.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file grp_metadata.tsv \
+--m-metadata-column 'Bd' \
+--p-intersect-ids \
+--p-method pearson \
+--o-metadata-distance-matrix core_metrics/mantel/bd_pearson_distance_matrix.qza \
+--o-mantel-scatter-visualization core_metrics/mantel/bd_pearson_weighted_vis.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file grp_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \ 
+--p-intersect-ids \ 
+--p-method pearson \
+--o-metadata-distance-matrix core_metrics/mantel/ttx_pearson_distance_matrix.qza \ 
+--o-mantel-scatter-visualization core_metrics/mantel/ttx_pearson_weighted_vis.qzv
+
+qiime diversity beta-correlation \ 
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \ 
+--m-metadata-file grp_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg'  \
+--p-intersect-ids \
+--p-method spearman \
+--o-metadata-distance-matrix core_metrics/mantel/ttx_distance_matrix.qza \
+--o-mantel-scatter-visualization core_metrics/mantel/ttx_spearman_weighted_vis.qzv
+
+
+GRP Beta-Diversity: Weighted-Unifrac
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file grp_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pairwise_permanova_weighted_bd_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file grp_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pairwise_anosim_weighted_bd_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file grp_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pairwise_permdisp_weighted_bd_significance.qzv
+
+GRP Beta-Diversity: Unweighted-Unifrac
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file grp_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pairwise_permanova_unweighted_bd_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file grp_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pairwise_permdisp_unweighted_bd_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file grp_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pairwise_anosim_unweighted_bd_significance.qzv
+
+GRP Beta-Diversity: Jaccard
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file grp_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pairwise_anosim_jaccard_bd_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file grp_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pairwise_permanova_jaccard_bd_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file grp_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pairwise_permdisp_jaccard_bd_significance.qzv
+
+
+
+SLNF
+
+Sub-setting by site – SLNF
+
+qiime feature-table filter-samples \
+--i-table removed_samples/1_filtered_table.qza \
+--p-where '[Site]="SLNF"' \
+--m-metadata-file new_newt_metadata.tsv \
+--output-dir SLNF_Dataset \
+--o-filtered-table slnf_only_table.qza
+
+qiime feature-table summarize \
+--i-table SLNF_Dataset/slnf_only_table.qza \
+--o-visualization SLNF_Dataset/Slnf_table_vis.qzv
+
+SLNF core-metrics
+
+qiime diversity core-metrics-phylogenetic \
+--i-table SLNF_Dataset/slnf_only_table.qza \
+--i-phylogeny removed_samples/fastree/rooted_tree.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--p-sampling-depth 5200 \
+--output-dir SLNF_Dataset/core_metrics
+
+SLNF beta-correlation: Mantel - Pearson
+
+qiime diversity beta-correlation \
+--i-distance-matrix SLNF_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method pearson \
+--p-intersect-ids \
+--o-metadata-distance-matrix SLNF_Dataset/core_metrics/mantel/pearson/ttx_bc_pearson_distance_matrix.qza \
+--o-mantel-scatter-visualization SLNF_Dataset/core_metrics/mantel/pearson/ttx_bc_pearson_mantel_vix.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix SLNF_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Bd' \
+--p-method pearson \
+--p-intersect-ids \
+--o-metadata-distance-matrix SLNF_Dataset/core_metrics/mantel/pearson/bd_bc_pearson_distance_matrix.qza \
+--o-mantel-scatter-visualization SLNF_Dataset/core_metrics/mantel/pearson/bd_bc_pearson_mantel_vix.qzv
+
+SLNF beta-correlation: Mantel - Spearman
+
+qiime diversity beta-correlation \
+--i-distance-matrix SLNF_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method spearman \
+--p-intersect-ids \
+--o-metadata-distance-matrix SLNF_Dataset/core_metrics/mantel/spearman/ttx_bc_spearman_distance_matrix.qza \
+--o-mantel-scatter-visualization SLNF_Dataset/core_metrics/mantel/spearman/ttx_bc_spearman_mantel_vix.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix SLNF_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Bd' \
+--p-method spearman \
+--p-intersect-ids \
+--o-metadata-distance-matrix SLNF_Dataset/core_metrics/mantel/spearman/bd_bc_spearman_distance_matrix.qza \
+--o-mantel-scatter-visualization SLNF_Dataset/core_metrics/mantel/spearman/bd_bc_spearman_mantel_vix.qzv
+
+SLNF Beta-Diversity: Unweighted Unifrac
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pairwise_permdisp_ttx_unweighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pairwise_permanova_ttx_unweighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pairwise_anosim_ttx_unweighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pairwise_anosim_bc_unweighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pairwise_permanova_bc_unweighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/unweighted_unifrac_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pairwise_permdisp_bc_unweighted_significance.qzv
+
+SLNF Beta-Diversity: Weighted Unifrac
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pairwise_permdisp_bd_weighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pairwise_permanova_bd_weighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pairwise_anosim_bd_weighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pairwise_anosim_ttx_weighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pairwise_permdisp_ttx_weighted_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/weighted_unifrac_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pairwise_permanova_ttx_weighted_significance.qzv
+
+SLNF Beta-Diversity: Bray-Curtis
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pairwise_permdisp_ttx_bc_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise --p-method permanova \
+--o-visualization core_metrics/beta/pairwise_permanova_ttx_bc_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pairwise_anosim_ttx_bc_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pairwise_anosim_bd_bc_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pairwise_permdisp_bd_bc_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pairwise_permanova_bd_bc_significance.qzv
+
+SLNF Beta-Diversity: Jaccard
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pairwise_permdisp_ttx_jaccard_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pairwise_permanova_ttx_jaccard_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'TTX_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pairwise_anosim_ttx_jaccard_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method anosim \
+--o-visualization core_metrics/beta/pairwise_anosim_bd_jaccard_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permanova \
+--o-visualization core_metrics/beta/pairwise_permanova_bd_jaccard_significance.qzv
+
+qiime diversity beta-group-significance \
+--i-distance-matrix core_metrics/jaccard_distance_matrix.qza \
+--m-metadata-file Slnf_metadata.tsv \
+--m-metadata-column 'Bd_Real' \
+--p-pairwise \
+--p-method permdisp \
+--o-visualization core_metrics/beta/pairwise_permdisp_bd_jaccard_significance.qzv
+
+LSSP
+
+Sub-setting by site - LSSP
+
+qiime feature-table filter-samples \
+--i-table removed_samples/1_filtered_table.qza \
+--p-where '[Site]="LSSP"' \
+--m-metadata-file new_newt_metadata.tsv \
+--output-dir LSSP_Dataset \
+--o-filtered-table lssp_only_table.qza
+
+LSSP core-metrics
+
+qiime diversity core-metrics-phylogenetic \
+--i-table LSSP_Dataset/lssp_only_table.qza \
+--i-phylogeny removed_samples/fastree/rooted_tree.qza \
+--m-metadata-file new_newt_metadata.tsv \
+--p-sampling-depth 5200 \
+--output-dir LSSP_Dataset/core_metrics
+
+LSSP beta-correlation: Mantel - Spearman
+
+qiime diversity beta-correlation \
+--i-distance-matrix LSSP_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method pearson --p-intersect-ids \
+--o-metadata-distance-matrix LSSP_Dataset/core_metrics/mantel/spearman/ttx_bc_pearson_distance_matrix.qza \
+--o-mantel-scatter-visualization LSSP_Dataset/core_metrics/mantel/pearson/ttx_bc_pearson_mantel_vis.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix LSSP_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv --m-metadata-column 'Bd' \
+--p-method pearson \
+--p-intersect-ids \
+--o-metadata-distance-matrix LSSP_Dataset/core_metrics/mantel/pearson/bd_bc_pearson_distance_matrix.qza \
+--o-mantel-scatter-visualization LSSP_Dataset/core_metrics/mantel/pearson/bd_bc_pearson_mantel_vis.qzv
+
+LSSP beta-correlation: Mantel - Spearman
+
+qiime diversity beta-correlation \
+--i-distance-matrix LSSP_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Predicted whole newt TTX mg' \
+--p-method spearman \
+--p-intersect-ids \
+--o-metadata-distance-matrix LSSP_Dataset/core_metrics/mantel/spearman/ttx_bc_spearman_distance_matrix.qza \
+--o-mantel-scatter-visualization LSSP_Dataset/core_metrics/mantel/spearman/ttx_bc_spearman_mantel_vis.qzv
+
+qiime diversity beta-correlation \
+--i-distance-matrix LSSP_Dataset/core_metrics/bray_curtis_distance_matrix.qza \
+--m-metadata-file na_no_metadata.tsv \
+--m-metadata-column 'Bd' \
+--p-method spearman \
+--p-intersect-ids \
+--o-metadata-distance-matrix LSSP_Dataset/core_metrics/mantel/spearman/bd_bc_spearman_distance_matrix.qza \
+--o-mantel-scatter-visualization LSSP_Dataset/core_metrics/mantel/spearman/bd_bc_spearman_mantel_vis.qzv
+
+Bd-Positive Sites
+
+Empress
+
+Pip install empress
+Qiime dev refresh-cache
+Qiime empress –help
+
+What is needed
+Feature taxonomy
+Sample-metadata.tsv
+Table.qza
+Rooted-tree phylogeny
+
+qiime empress community-plot \
+--i-tree removed_samples/fastree/rooted_tree.qza \
+--i-feature-table removed_samples/1_filtered_table.qza \
+--m-sample-metadata-file new_newt_metadata.tsv \
+--m-feature-metadata-file assigned_taxonomy/assigned_taxonomy_sequences.qza \
+--p-ignore-missing-samples \
+--o-visualization empress/empress_tree_taxonomy_table.qzv
+
+ANCOM
+qiime composition add-pseudocount 
+--i-table 1_filtered_table.qza 
+--o-composition-table abundance_count_table.qza
+
+qiime composition ancom 
+--i-table removed_samples/abundance_count_table.qza 
+--m-metadata-file new_newt_metadata.tsv 
+--m-metadata-column TTX_Real 
+--o-visualization removed_samples/ANCOM/ttx_ancom.qzv
+
+ADONIS
+ADONIS test was conducted using Bd * TTX * Site for each of the possible matrices.
+Bray curtis
+qiime diversity adonis \
+--i-distance-matrix removed_samples/new_core_metrics/beta/bray_curtis/bray_curtis_distance_matrix.qza \
+ --p-formula "Bd * TTX * Site" \
+--m-metadata-file na_no_metadata.tsv \
+--o-visualization removed_samples/new_core_metrics/trial_adonis
+Core Microbiome
+qiime feature-table core-features 
+--i-table removed_samples/all_removed_table_101623.qza
+--p-min-fraction 0.8
+--p-max-fraction 1.0
+--p-steps 25
+--output-dir core_community
+--verbose
+
+GreenGenes2 Workflow
+qiime feature-classifier extract-reads
+--i-sequences 2022.10.seqs.fna.qza
+--p-f-primer GTGCCAGCMGCCGCGGTAA
+--p-r-primer CCGYCAATTYMTTTRAGTTT
+--p-min-length 0
+--p-max-length 0
+--p-trunc-len
+--p-n-jobs 8
+--o-reads gg2-ref-seqs
+
+qiime feature-classifier fit-classifier-naive-bayes
+--i-reference-reads gg2-ref-seqs.qza
+--i-reference-taxonomy reference-taxonomy.qza
+--o-classifier TBJ_150bp_gg2-classifier
+
+Test the classifier against reference reads
+qiime feature-classifier classify-sklearn
+--i-classifier TBJ_150bp_gg2-classifier.qza
+--i-reads gg2-ref-seqs.qza
+--o-classification test_classification
+
+Assign actual taxonomy
+qiime feature-classifier classify-sklearn
+--i-classifier taxonomy/TBJ_150bp_gg2-classifier.qza
+--i-reads taxonomy/rep_seqs_deblur_150nt.qza
+--p-n-jobs -1
+--o-classification taxonomy/150bp_gg_classified_taxonomy
+
+Sliva_138 Classifier
+qiime feature-classifier extract-reads
+--i-sequences silva-138-99-seqs.qza
+--p-f-primer GTGCCAGCMGCCGCGGTAA
+--p-r-primer CCGYCAATTYMTTTRAGTTT
+--p-min-length 0
+--p-max-length 0
+--p-n-jobs 10
+--o-reads extracted_silva_138_reads
+
+qiime feature-classifier fit-classifier-naive-bayes
+--i-reference-reads extracted_silva_138_reads.qza
+--i-reference-taxonomy silva-138-99-tax.qza
+--p-classify--chunk-size 30000
+--o-classifier TBJ_Silva_138_classifier
+
+qiime feature-classifier classify-sklearn
+--i-classifier TBJ_Silva_138_classifier.qza
+--i-reads extracted_silva_138_reads.qza
+--p-n-jobs -1
+--o-classification test_classification
+
+qiime metadata tabulate
+--m-input-file test_classification.qza
+--o-visualization test_taxonomyy_silva138_vis
+
+Qiime feature-classifier classify-sklearn
+qiime feature-classifier classify-sklearn
+--i-classifier TBJ_Silva_138_classifier.qza
+--i-reads extracted_silva_138_reads.qza
+--p-n-jobs -1
+--o-classification TBJ_Silva_138min0max0.qza
