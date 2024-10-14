@@ -77,6 +77,20 @@ tt_data2 <- tt_data2 %>%
   filter(!Location %in% c('Bolinger', 'Crocker') & !TTX_mg > 2)
 fcsp_neg <- tg_data2 %>%
   filter(!SampleID %in% 'FCSP-05')
+loc_bd_pos_tg <- tg_data2 %>%
+  filter(!Location %in% 'FCSP')
+loc_tt <- tt_data2 %>%
+  filter(!Location %in% c('Gunstock', 'Madonna'))
+tt_df3 <- tt_data2 %>%
+  filter(Location %in% c('Cold_Creek', 'Muir'))
+tt.data3 <- tt_data2 %>% 
+  filter(!is.na(observed_features))
+tg.data3 <- tg_data2 %>% 
+  filter(!is.na(observed_features))
+tg_data4 <- tg_data2 %>%
+  subset(infected == 1)
+tt_df4 <- tt_data2 %>%
+  subset(infected == 1)
 
 #TTX between species 
 species_ttx <- kruskal.test(metadata_2$TTX_mg, metadata_2$Species)
@@ -184,7 +198,8 @@ tt_ttx_location
 #combine the plots
 ttx_location_arranged <- ggarrange(tg_ttx_location, tt_ttx_location)
 ttx_location_arranged
-
+ggsave("figure_2.jpeg", ttx_location_arranged, dpi = 300,
+        units = 'in', width = 15, height = 12)
 #TATO sex kw
 tt_sex_kw <- kruskal.test(tt_data2$TTX_mg, tt_data2$sex)
 tt_sex_kw
@@ -226,7 +241,7 @@ dt3$Letter <- cld_bd$Letter
 dt3
 
 
-#TAGR infection status
+#TAGR infection status #######
 tg_bd_kw_pres <- kruskal.test(tg_data2$infected, tg_data2$Location)
 tg_bd_kw_pres
 
@@ -305,7 +320,7 @@ indiv_bd
 indiv_tt <- kruskal.test(tato_bd_df$Log_bd, tato_bd_df$Location)
 indiv_tt
 
-;#Bd infection plots______________________________________________________________________________________
+#Bd infection plots______________________________________________________________________________________
 bd_loc_plot2 <- tg_data2 %>%
   ggplot(aes(x = Location, y = Log_bd, fill = Location))+
   geom_boxplot()+
@@ -330,10 +345,10 @@ bd_loc_plot2 <- tg_data2 %>%
   guides(fill = FALSE)+
   scale_fill_manual(values = tg_colors)+
   coord_cartesian(ylim=c(0,NA))+
-  expand_limits(y = 0)+
-  geom_text(data = dt3, aes(label = Letter, x = Location, y = log_bd + 0.25),
+  expand_limits(y = c(0,5))+
+  geom_text(data = dt3, aes(label = Letter, x = Location, y = log_bd + 0.1),
             vjust = -0.5, hjust = 0.5, fontface = 'bold', size = 4, na.rm = TRUE) +
-  labs(tag='a)')
+  labs(tag='(A)')
 bd_loc_plot2
 
 bd_loc_plot3 <- tt_data2 %>%
@@ -357,10 +372,10 @@ bd_loc_plot3 <- tt_data2 %>%
   guides(fill = FALSE)+
   scale_fill_manual(values = tt_colors)+
   coord_cartesian(ylim=c(0,NA))+
-  expand_limits(y = 0)+
+  expand_limits(y = c(0,5))+
   geom_text(data = dt4, aes(label = Letter, x = Location, y = log_bd + 0.25),
             vjust = -0.5, hjust = 0.5, fontface = 'bold', size = 4, na.rm = TRUE) +
-  labs(tag = 'b)')
+  labs(tag = '(B)')
 bd_loc_plot3
 
 bd_loc_plot_joined <- ggarrange(bd_loc_plot2, bd_loc_plot3)
@@ -391,7 +406,8 @@ tg_prev_plot <- ggplot(
     panel.grid = element_blank())+
   geom_text(data = dt31, aes(label = Letter, x = Location, y = infected + 0.25),
             vjust = -0.5, hjust = 0.5, fontface = 'bold', size = 4, na.rm = TRUE) +
-  labs(tag = 'c)')
+  expand_limits(y = c(0,100))+
+  labs(tag = '(C)')
 
 tg_prev_plot
 
@@ -423,7 +439,7 @@ tt_prev_plot <- ggplot(
   scale_x_discrete(labels = c("Cold Creek","Grunstock","Madonna","Muir"))+
   geom_text(data = dt_status, aes(label = Letter, x = Location, y = infected + 0.25),
             vjust = -0.5, hjust = 0.5, fontface = 'bold', size = 4, na.rm = TRUE) +
-  labs(tag = 'd)')
+  labs(tag = '(D)')
 tt_prev_plot
 
 prev_plots <- ggarrange(tg_prev_plot, tt_prev_plot)
@@ -458,44 +474,68 @@ tt_bd_prev_plot <- tt_data2 %>%
   geom_hline(yintercept = 0, 
              color = "black", 
              size = 0.5)+
-  labs(tag = 'b)')
-
+  expand_limits(y = c(0,5))+
+  labs(tag = '(B)')
+tt_bd_prev_plot
 
 multi_plots <- ggarrange(bd_loc_plot_joined, prev_plots,
                          nrow = 2)
 multi_plots
 
+ggsave("figure_3.pdf", multi_plots, units = 'in', width = 11, height = 8, dpi = 500)
+#infection as a function of TTX #########
+tg_ttx_bd2 <- glmer(infected ~ TTX_mg + (1 | Location), data = fcsp_neg, family = 'binomial')
+tg_ttx_bd_null <- glmer(infected ~ (1 | Location), data = fcsp_neg, family = 'binomial')
+summary(tg_ttx_bd2)
+drop1(tg_ttx_bd2, test = 'Chisq', na.action = 'na.omit')
+lmtest::lrtest(tg_ttx_bd2, tg_ttx_bd_null)
 
-#__________ttx-bd__________________________________________________________________________________
+tt_ttx_bd2 <- glmer(infected ~ TTX_mg + (1 | Location), data = tt_data2, family = 'binomial')
+tt_ttx_bd_null <- glmer(infected ~ (1 | Location), data = tt_data2, family = 'binomial')
+summary(tt_ttx_bd2)
+drop1(tt_ttx_bd2, test = 'Chisq')
+lmtest::lrtest(tt_ttx_bd2, tt_ttx_bd_null)
+# neither are significant
+################################################____________________________
 
-tg_ttx_bd <- glmer(infected ~ TTX_mg * mass_g * svl_mm + (1 | Location), data = tg_data2, family = 'binomial')
-tg_ttx_bd2 <- glmer(infected ~ TTX_mg + (1 | Location), data = tg_data2, family = 'binomial')
-summary(tg_ttx_bd)
-anova(tg_ttx_bd)
-plot(allEffects(tg_ttx_bd))
-anova(tg_ttx_bd, tg_ttx_bd2, test = 'Chisq')
 
+
+
+#testing infection status as a factor of sex/location ####
 tg_sex_glmm <- glmer(infected ~ sex + (1 | Location), data = tg_data2, family = 'binomial')
+tg_sex_null <- glmer(infected ~ (1 | Location), data = tg_data2, family = 'binomial')
 summary(tg_sex_glmm)
-anova(tg_sex_glmm)
+drop1(tg_sex_glmm, test = 'Chisq')
+lmtest::lrtest(tg_sex_glmm, tg_sex_null)
+#not significant
 
-tt_ttx_bd <- glmer(infected ~ TTX_mg + (1 | Location), data = tt_data2, family = 'binomial')
-tt_ttx_bd2 <- glmer(infected ~ TTX_mg * mass_g + (1 | Location), data = tt_data2, family = 'binomial')
-summary(tt_ttx_bd)
-anova(tt_ttx_bd)
-anova(tt_ttx_bd, tt_ttx_bd2, test = 'Chisq')
 
 tt_sex_glmm <- glmer(infected ~ sex + (1 | Location), data = tt_data2, family = 'binomial')
+tt_sex_glmm_null <- glmer(infected ~ (1 | Location), data = tt_data2, family = 'binomial')
 summary(tt_sex_glmm)
-anova(tt_sex_glmm)
+drop1(tt_sex_glmm, test = 'Chisq')
+lmtest::lrtest(tt_sex_glmm, tt_sex_glmm_null)
+#not significant
+################################################____________________________
 
-#Plot
+
+  #Plot
+mass_values <- seq(min(tg_data2$mass_g), max(tg_data2$mass_g), length.out = 100)  # Adjust as needed.
+svl_values <- seq(min(tg_data2$svl_mm), max(tg_data2$svl_mm), length.out = 100)   # Adjust as needed.
 unique_locations <- unique(tg_data2$Location)
 ttx_weight <- seq(0.05, 7, 0.01)
 location_colors <- data.frame(Location = unique_locations, Color = tg_colors[1:length(unique_locations)])
 newdata <- merge(tg_data2, location_colors, by = "Location")
 newdata <- expand.grid(TTX_mg = ttx_weight, Location = unique_locations)
-predicted_responses <- predict(tg_ttx_bd, newdata = newdata, type = 'response')
+# Expand the grid to include these values.
+newdata <- expand.grid(
+  TTX_mg = ttx_weight,
+  Location = unique_locations,
+  mass_g = mean(mass_values),   # Use mean or other appropriate value.
+  svl_mm = mean(svl_values)     # Use mean or other appropriate value.
+)
+
+predicted_responses <- predict(tg_ttx_bd2, newdata = newdata, type = 'response')
 newdata$Predicted_Response <- predicted_responses
 
 
@@ -513,9 +553,7 @@ tg_glmm <- ggplot(newdata, aes(x = TTX_mg, y = Predicted_Response,
     axis.title.x = element_text(face = 'bold',
                                 size = 14,
                                 hjust = 0.5),
-    plot.title = element_text(face = 'italic',
-                              hjust = 0.5,
-                              size = 20),
+    plot.title = element_blank(),
     axis.title.y = element_text(face = 'bold',
                                 size = 14)
   ) +
@@ -529,14 +567,16 @@ tg_glmm <- ggplot(newdata, aes(x = TTX_mg, y = Predicted_Response,
              color = "black", 
              linewidth = 0.5)+
   expand_limits(x = c(0, max(newdata$TTX_mg)), y = c(0, max(newdata$Predicted_Response)))+
-  labs(tag = 'a)')
+  labs(tag = '(A)')
+
+tg_glmm
 
 unique_locations_tt <- unique(tt_data2$Location)
 tt_location_colors <- data.frame(Location = unique_locations_tt, Color = tt_colors[1:length(unique_locations_tt)])
 tt_data2 <- merge(tt_data2, tt_location_colors, by = "Location")
 tt_ttx_weight <- seq(0.002, 2, 0.01)
 tt_newdata <- expand.grid(TTX_mg = tt_ttx_weight, Location = unique_locations_tt)
-tt_predicted_responses <- predict(tt_ttx_bd, newdata = tt_newdata, type = 'response')
+tt_predicted_responses <- predict(tt_ttx_bd2, newdata = tt_newdata, type = 'response')
 tt_newdata$Predicted_Response <- tt_predicted_responses
 
 
@@ -554,9 +594,7 @@ tt_plot_glmm <- ggplot(tt_newdata, aes(x = TTX_mg, y = Predicted_Response,
     axis.title.x = element_text(face = 'bold',
                                 size = 14,
                                 hjust = 0.5),
-    plot.title = element_text(face = 'italic',
-                              hjust = 0.5,
-                              size = 20),
+    plot.title = element_blank(),
     axis.title.y = element_text(face = 'bold',
                                 size = 14)
   ) +
@@ -570,37 +608,174 @@ tt_plot_glmm <- ggplot(tt_newdata, aes(x = TTX_mg, y = Predicted_Response,
              color = "black", 
              linewidth = 0.5)+
   expand_limits(x = c(0, max(tt_newdata$TTX_mg)), y = c(0, max(tt_newdata$Predicted_Response)))+
-  labs(tag = 'b)')
+  labs(tag = '(B)')
 
 new_glmm <- ggarrange(tg_glmm, tt_plot_glmm)
 new_glmm
-#pos loc
 
+#tg_tt ttx-bd_prev plot ##########################################
+tg.loc.prev <- fcsp_neg %>%
+  group_by(Location) %>%
+  dplyr::summarise(Proportion = mean(infected == 1) * 100,
+                   mean_ttx = mean(TTX_mg),
+                   ttx_se = sd(TTX_mg, na.rm = TRUE) / sqrt(n()),
+                   sample_size = n(),
+                   prev_sd = sqrt(sample_size * (Proportion / 100) * (1 - Proportion / 100))
+                   )
+
+tg_bd_prev_ttx_plot <- tg.loc.prev %>%  
+  ggplot(aes(mean_ttx, Proportion, color = Location)) + 
+  geom_errorbarh(aes(x = mean_ttx, xmin = mean_ttx - ttx_se, 
+                     xmax = mean_ttx + ttx_se),
+                size = 1,
+                height = 0,
+                color = 'black') +
+  geom_errorbar(aes(y = Proportion,
+                    ymin = Proportion - prev_sd,
+                    ymax = Proportion + prev_sd),
+                size = 1,
+                width = 0,
+                color = 'black') +
+  geom_point(size = 3) +
+  theme_minimal() +
+  labs(x = 'Mean TTX (mg)',
+       y = 'Infection Prevalence') +
+  scale_color_manual(values = tg_colors) +
+  theme(
+    panel.grid = element_blank(),
+    axis.text.x = element_text(face = 'bold',
+                               size = 16),
+    axis.text.y = element_text(face = 'bold',
+                               size = 14),
+    axis.title.x = element_text(face = 'bold',
+                                size = 14,
+                                hjust = 0.5),
+    plot.title = element_blank(),
+    axis.title.y = element_text(face = 'bold',
+                                size = 14),
+    axis.line = element_line(),
+    legend.position = c(1,0.5),
+    legend.justification = c('right', 'top'),
+    legend.box.background = element_rect(),
+    legend.title = element_text(face = "bold",
+                                size = 20,
+                                hjust = 0.5),
+    legend.text = element_text(size = 15)
+  ) + 
+  labs(tag = '(C)') +
+  scale_y_continuous(limits = c(0,100))
+  
+
+tg_bd_prev_ttx_plot
+
+
+#tt plot
+tt.loc.prev <- tt_data2 %>%
+  group_by(Location) %>%
+  dplyr::summarise(Proportion = mean(infected == 1) * 100,
+                   mean_ttx = mean(TTX_mg),
+                   ttx_se = sd(TTX_mg, na.rm = TRUE) / sqrt(n()),
+                   sample_size = n(),
+                   prev_sd = sqrt(sample_size * (Proportion / 100) * (1 - Proportion / 100))
+  )
+
+tt_bd_prev_ttx_plot <- tt.loc.prev %>%  
+  ggplot(aes(mean_ttx, Proportion, color = Location)) + 
+  geom_errorbarh(aes(x = mean_ttx, xmin = mean_ttx - ttx_se, 
+                     xmax = mean_ttx + ttx_se),
+                 size = 1,
+                 height = 0,
+                 color = 'black') +
+  geom_errorbar(aes(y = Proportion,
+                    ymin = Proportion - prev_sd,
+                    ymax = Proportion + prev_sd),
+                size = 1,
+                width = 0,
+                color = 'black') +
+  geom_point(size = 3) +
+  theme_minimal() +
+  labs(title = 'Taricha torosa',
+       x = 'Mean TTX (mg)',
+       y = 'Infection Prevalence') +
+  scale_color_manual(values = tt_colors,
+                     labels = c('Cold Creek', 'Gunstock', 'Madonna', 'Muir')) +
+  theme(
+    panel.grid = element_blank(),
+    axis.text.x = element_text(face = 'bold',
+                               size = 16),
+    axis.text.y = element_text(face = 'bold',
+                               size = 14),
+    axis.title.x = element_text(face = 'bold',
+                                size = 14,
+                                hjust = 0.5),
+    plot.title = element_blank(),
+    axis.title.y = element_text(face = 'bold',
+                                size = 14),
+    axis.line = element_line(),
+    legend.position = c(1,0.5),
+    legend.justification = c('right', 'top'),
+    legend.box.background = element_rect(),
+    legend.title = element_text(face = "bold",
+                                size = 20,
+                                hjust = 0.5),
+    legend.text = element_text(size = 15)
+  ) +
+  guides(color = guide_legend(title = "Location")) +
+  labs(tag = "(D)")
+
+tt_bd_prev_ttx_plot
+
+glmms <- ggarrange(tg_glmm, tt_plot_glmm,
+                   ncol = 2,
+                   nrow = 1,
+                   widths = c(2,2)) 
+glmms
+ggarrange(glmms, glmms2)
+
+glmm_means <- ggaglmm_means <- ggaglmm_means <- ggarrange(tg_bd_prev_ttx_plot, tt_bd_prev_ttx_plot)
+glmm_means
+ggarrange(glmms, glmm_means,
+          nrow = 2,
+          ncol = 2,
+          heights = c(0.5, 0.5, 0.5, 0.5),
+          widths = c(0.5, 0.5, 0.5, 0.5)
+          )
+
+glmms2 <- ggarrange(tt_plot_glmm, tt_bd_prev_ttx_plot,
+                    common.legend = T,
+                    legend = 'bottom',
+                    ncol = 2,
+                    nrow = 1,
+                    heights = c(2,1))
+
+glmms2
+final.plot <- ggarrange(glmms.update, glmms2,
+          nrow = 1,
+          ncol = 2,
+          heights = c(1, 1),
+          widths = c(0.5, 0.5))
+final.plot <- ggarrange(glmms, glmm_means,
+          nrow = 2)
+ggsave("figure_4.pdf", plot = final.plot, width = 13, height = 10,
+       units = 'in', dpi = 1000)
+
+
+f# Bd infection status as TTX with location ######______________
 tg_loc_glmm <- glmer(infected ~ TTX_mg + (1 | Location), data = loc_bd_pos_tg, family = 'binomial')
+tg_loc_glmm_null1 <- glmer(infected ~ (1 | Location), data = loc_bd_pos_tg, family = 'binomial')
 summary(tg_loc_glmm)
-anova(tg_loc_glmm)
+drop1(tg_loc_glmm, test = 'Chisq')
+lmtest::lrtest(tg_loc_glmm, tg_loc_glmm_null1)
 
 tt_loc_glmm <- glmer(infected ~ TTX_mg + (1 | Location), data = loc_tt, family = 'binomial')
+tt_loc_glmm_null <- glmer(infected ~ (1 | Location), data = loc_tt, family = 'binomial')
 summary(tt_loc_glmm)
-anova(tt_loc_glmm)
+drop1(tt_loc_glmm, test = 'Chisq')
+lrtest(tt_loc_glmm, tt_loc_glmm_null)
+#neither are significant ####################3
 
 
-#_________________________alpha div______________________
-shapiro.test(tt_data2$faith_pd)
-shapiro.test(tt_data2$observed_features)
-tt_data2$log_asv <- log(tt_data2$observed_features + 1)
-shapiro.test(tt_data2$log_asv)
-shapiro.test(tt_data2$pielou_evenness)
-shapiro.test(tt_data2$shannon_entropy)
-
-tg_data2$log_faith <- log(tg_data2$faith_pd + 1)
-shapiro.test(tg_data2$log_faith)
-tg_data2$log_asv <- log(tg_data2$observed_features + 1)
-shapiro.test(tg_data2$log_asv)
-shapiro.test(tg_data2$log_pielou)
-tg_data2$log_pielou <- log(tg_data2$pielou_evenness + 1)
-shapiro.test(tg_data2$shannon_entropy)
-
+#__________________tt_loc_glmm_full#_________________________alpha div______________________
 tg_faith_kw <- kruskal.test(tg_data2$faith_pd, tg_data2$Location)
 tg_faith_kw
 
@@ -628,16 +803,7 @@ anova(faith_ttx)
 tg_pielou_evenness_lm <- lmer(pielou_evenness ~ TTX_mg + (1 | Location), data = tg_data2)
 summary(tg_pielou_evenness_lm)
 anova(tg_pielou_evenness_lm)
-pe <- tg_data2$pielou_evenness
-lin_1 <- lm(pe ~ TTX_mg, data = tg_data2)
-box_res_pielou <- boxCox(lin_1)
-best_lambda_pe <- box_res_pielou$x[which.max(box_res_pielou$y)]
-transformed_variable <- bcPower(pe, best_lambda_pe)
-tg_data2$transformed_pielou <- transformed_variable
-shapiro_test(tg_data2$transformed_pielou)
-tg_pielou_evenness_lm2 <- lmer(pielou_evenness ~ TTX_mg + (1 | Location), data = tg_data2)
-summary(tg_pielou_evenness_lm2)
-anova(tg_pielou_evenness_lm2)
+
 
 tt_observed_features_lm <- lmer(observed_features ~ TTX_mg + (1 | Location), data = tt_data2)
 summary(tt_observed_features_lm)
@@ -648,18 +814,30 @@ tt_shannon_entropy_lm <- lmer(shannon_entropy ~ TTX_mg + (1 | Location), data = 
 summary(tt_shannon_entropy_lm)
 anova(tt_shannon_entropy_lm)
 
-
 tt_faith_lm <- lmer(faith_pd ~ TTX_mg + (1 | Location), data = tt_data2)
 summary(tt_faith_lm)
 anova(tt_faith_lm)
-tt_faith_lm
 
 tt_pielou_evenness_lm <- lmer(pielou_evenness ~ TTX_mg + (1 | Location), data = tt_data2)
 summary(tt_pielou_evenness_lm)
 anova(tt_pielou_evenness_lm)
+################################################################
 
 
-#Bd______________
+tt_asv_kw <- kruskal.test(tt_data2$observed_features, tt_data2$Location)
+tt_asv_kw
+
+tt_shan_kw <- kruskal.test(tt_data2$shannon_entropy, tt_data2$Location)
+tt_shan_kw
+
+tt_faith_kw <- kruskal.test(tt_data2$faith_pd, tt_data2$Location)
+tt_faith_kw
+
+tt_pielou_kw <- kruskal.test(tt_data2$pielou_evenness, tt_data2$Location)
+tt_pielou_kw
+
+
+#Bd______________ #####################################33
 tg_observed_features_lm_bd <- lmer(observed_features ~ Log_bd + (1 | Location), data = tg_data2)
 summary(tg_observed_features_lm_bd)
 anova(tg_observed_features_lm_bd)
@@ -675,9 +853,6 @@ anova(tg_faith_lm_bd)
 tg_pielou_evenness_lm_bd <- lmer(pielou_evenness ~ Log_bd + (1 | Location), data = tg_data2)
 summary(tg_pielou_evenness_lm_bd)
 anova(tg_pielou_evenness_lm_bd)
-
-
-
 
 
 tt_observed_features_lm_bd <- lmer(observed_features ~ Log_bd + (1 | Location), data = tt_data2)
@@ -696,7 +871,65 @@ tt_pielou_evenness_lm_bd <- lmer(pielou_evenness ~ Log_bd + (1 | Location), data
 summary(tt_pielou_evenness_lm_bd)
 anova(tt_pielou_evenness_lm_bd)
 
-#Bd locations______________
+##########################################
+#removing na rows because they mess up the drop1 model
+tg.data3 <- tg_data2 %>% 
+  filter(!is.na(observed_features))
+tg_obs_feat_inf <- glmer(infected ~ observed_features + (1 | Location), data = tg.data3, family = 'binomial')
+tg_obs_feat_inf_null <- glmer(infected ~ (1 | Location), data = tg.data3, family = 'binomial')
+summary(tg_obs_feat_inf)
+drop1(tg_obs_feat_inf, test = 'Chisq')
+lmtest::lrtest(tg_obs_feat_inf, tg_obs_feat_inf_null)
+
+tg_shan_feat_inf <- glmer(infected ~ shannon_entropy + (1 | Location), data = tg.data3, family = 'binomial')
+tg_shan_feat_inf_null <- glmer(infected ~ (1 | Location), data = tg.data3, family = 'binomial')
+summary(tg_shan_feat_inf)
+drop1(tg_shan_feat_inf, test = "Chisq")
+lmtest::lrtest(tg_shan_feat_inf, tg_shan_feat_inf_null)
+
+
+tg_faith_feat_inf <- glmer(infected ~ faith_pd + (1 | Location), data = tg.data3, family = 'binomial')
+tg_faith_feat_inf_null <- glmer(infected ~ (1 | Location), data = tg.data3, family = 'binomial')
+summary(tg_faith_feat_inf)
+drop1(tg_faith_feat_inf, test = "Chisq")
+lmtest::lrtest(tg_faith_feat_inf, tg_faith_feat_inf_null)
+
+tg_pielou_feat_inf <- glmer(infected ~ pielou_evenness + (1 | Location), data = tg.data3, family = 'binomial')
+tg_pielou_feat_inf_null <- glmer(infected ~ (1 | Location), data = tg.data3, family = 'binomial')
+summary(tg_pielou_feat_inf)
+drop1(tg_pielou_feat_inf, test = "Chisq")
+lmtest::lrtest(tg_pielou_feat_inf, tg_pielou_feat_inf_null)
+
+#remove nas from data for TATO
+tt.data3 <- tt_data2 %>% 
+  filter(!is.na(observed_features))
+tt_obs_feat_inf <- glmer(infected ~ observed_features + (1 | Location), data = tt.data3, family = 'binomial')
+tt_obs_feat_inf_null <- glmer(infected ~ (1 | Location), data = tt.data3, family = 'binomial')
+summary(tt_obs_feat_inf)
+drop1(tt_obs_feat_inf, test = "Chisq")
+lmtest::lrtest(tt_obs_feat_inf, tt_obs_feat_inf_null)
+
+tt_shan_feat_inf <- glmer(infected ~ shannon_entropy + (1 | Location), data = tt.data3, family = 'binomial')
+tt_shan_feat_inf_null <- glmer(infected ~ (1 | Location), data = tt.data3, family = 'binomial')
+summary(tt_shan_feat_inf)
+drop1(tt_shan_feat_inf, test = "Chisq")
+lmtest::lrtest(tt_shan_feat_inf, tt_shan_feat_inf_null)
+
+tt_faith_feat_inf <- glmer(infected ~ faith_pd + (1 | Location), data = tt.data3, family = 'binomial')
+tt_faith_feat_inf_null <- glmer(infected ~ (1 | Location), data = tt.data3, family = 'binomial')
+summary(tt_faith_feat_inf)
+drop1(tt_faith_feat_inf, test = "Chisq")
+lmtest::lrtest(tt_faith_feat_inf, tt_faith_feat_inf_null)
+
+tt_pielou_feat_inf <- glmer(infected ~ pielou_evenness + (1 | Location), data = tt.data3, family = 'binomial')
+tt_pielou_feat_inf_null <- glmer(infected ~ (1 | Location), data = tt.data3, family = 'binomial')
+summary(tt_pielou_feat_inf)
+drop1(tt_pielou_feat_inf, test = "Chisq")
+lmtest::lrtest(tt_pielou_feat_inf, tt_pielou_feat_inf_null)
+
+
+
+#Bd locations______________ ############################
 tg_obs_bdloc <- lmer(observed_features ~ Log_bd + (1 | Location), data = loc_bd_pos_tg)
 summary(tg_obs_bdloc)
 anova(tg_obs_bdloc)
@@ -709,16 +942,10 @@ tg_faith_lm_bdloc <- lmer(faith_pd ~ Log_bd + (1 | Location), data = loc_bd_pos_
 summary(tg_faith_lm_bdloc)
 anova(tg_faith_lm_bdloc)
 
-
 tg_pielou_bdloc <- lmer(pielou_evenness ~ Log_bd + (1 | Location), data = loc_bd_pos_tg)
 summary(tg_pielou_bdloc)
 anova(tg_pielou_bdloc)
 
-
-
-
-tt_df3 <- tt_data2 %>%
-  filter(Location %in% c('Cold_Creek', 'Muir'))
 
 tt_observed_features_lm_bd_bdloc <- lmer(observed_features ~ Log_bd + (1 | Location), data = tt_df3)
 summary(tt_observed_features_lm_bd_bdloc)
@@ -736,10 +963,9 @@ tt_pielou_evenness_lm_bd_bdloc <- lmer(pielou_evenness ~ Log_bd + (1 | Location)
 summary(tt_pielou_evenness_lm_bd)
 anova(tt_pielou_evenness_lm_bd_bdloc)
 
-#bd_pos indiv________________________________________
-tg_data4 <- tg_data2 %>%
-  subset(infected == 1)
 
+
+#bd_pos indiv________________________________________ ############################
 tg_obs_indiv <- lmer(observed_features ~ Log_bd + (1 | Location), data = tg_data4)
 summary(tg_obs_indiv)
 anova(tg_obs_indiv)
@@ -757,9 +983,6 @@ summary(tg_pielou_indiv)
 anova(tg_pielou_indiv)
 
 
-tt_df4 <- tt_data2 %>%
-  subset(infected == 1)
-
 tt_obs_indiv <- lmer(observed_features ~ Log_bd + (1 | Location), data = tt_df4)
 summary(tt_obs_indiv)
 anova(tt_obs_indiv)
@@ -776,7 +999,10 @@ tt_pielou_indiv <- lmer(pielou_evenness ~ Log_bd + (1 | Location), data = tt_df4
 summary(tt_pielou_indiv)
 anova(tt_pielou_indiv)
 
-#Figures for this
+
+
+
+#Figures for this #####
 labs_for_stuff <- c('Taricha_granulosa' = '',
                     'Taricha_torosa' = 'Taricha torosa')
 tg_obs <- kruskal.test(fcsp_neg$observed_features, fcsp_neg$TTX_Real)
@@ -919,7 +1145,7 @@ tt_alpha_boxplot_obs
 obs_arranged <- ggarrange(alpha_boxplot_obs, tt_alpha_boxplot_obs)
 obs_arranged
 
-#_______mixed alpha
+#alpha and the rest ############
 
 faith_tg <- lmer(faith_pd ~ TTX_Real + (1 | Location), data = tg_data2)
 summary(faith_tg)
@@ -938,8 +1164,6 @@ piel_tg <- lmer(pielou_evenness ~ TTX_Real + (1 | Location), data = tg_data2)
 summary(piel_tg)
 anova(piel_tg)
 
-
-
 faith_1 <- lmer(faith_pd ~ TTX_Real + (1 | Location), data = tt_data2)
 summary(faith_1)
 anova(faith_1)
@@ -952,12 +1176,14 @@ shan_tt <- lmer(shannon_entropy ~ TTX_Real + (1 | Location), data = tt_data2)
 summary(shan_tt)
 anova(shan_tt)
 
-
 piel_tt <- lmer(pielou_evenness ~ TTX_Real + (1 | Location), data = tt_data2)
 summary(piel_tt)
 anova(piel_tt)
 
-#sex mixed 
+
+
+
+#sex mixed ##### 
 faith_tg_sex <- lmer(faith_pd ~ sex + (1 | Location), data = tg_data2)
 summary(faith_tg_sex)
 anova(faith_tg_sex)
@@ -976,7 +1202,6 @@ summary(piel_tg_sex)
 anova(piel_tg_sex)
 
 
-
 faith_1_sex <- lmer(faith_pd ~ sex + (1 | Location), data = tt_data2)
 summary(faith_1_sex)
 anova(faith_1_sex)
@@ -993,8 +1218,10 @@ boxplot(tt_data2$shannon_entropy ~ tt_data2$sex)
 piel_tt_sex <- lmer(pielou_evenness ~ sex + (1 | Location), data = tt_data2)
 summary(piel_tt_sex)
 anova(piel_tt_sex)
+
+
   
-#mass lmers
+#mass lmers #################33
 tg_mass_lm <- lmer(observed_features ~ mass_g + (1 | Location), data = tg_data2)
 summary(tg_mass_lm)
 anova(tg_mass_lm)
@@ -1011,20 +1238,21 @@ tg_pielou_mass <- lmer(pielou_evenness ~ mass_g + (1 | Location), data = tg_data
 anova(tg_pielou_mass)
 summary(tg_pielou_mass)
 
-
-
 tt_obs_mass <- lmer(observed_features ~ mass_g + (1 | Location), data = tt_data2)
 summary(tt_obs_mass)
-car::Anova(tt_obs_mass, type = 'III')
+anova(tt_obs_mass, type = 'III')
+
 
 tt_shan_mass <- lmer(shannon_entropy ~ mass_g + (1 | Location), data = tt_data2)
 summary(tt_shan_mass)
-car::Anova(tt_shan_mass, type = 'III')
+anova(tt_shan_mass, type = 'III')
+
 tt_faith_mass <- lmer(faith_pd ~ mass_g + (1 | Location), data = tt_data2)
 summary(tt_faith_mass)
-car::Anova(tt_faith_mass, type = 'III')
+anova(tt_faith_mass, type = 'III')
+
 tt_pielou_mass <- lmer(pielou_evenness ~ mass_g + (1 | Location), data = tt_data2)
-car::Anova(tt_pielou_mass, type = 'III')
+anova(tt_pielou_mass, type = 'III')
 summary(tt_pielou_mass)
 
 #Plots for these
@@ -1341,7 +1569,7 @@ tg_part_1 <- ggpcoa(ord = tg_prcomp3,
                                 16, 16, 16))+
   scale_fill_manual(values = tg_colors)+
   scale_color_manual(values = tg_colors)+
-  labs(tag = 'a)')
+  labs(tag = '(A)')
 
 tg_part_1
 
@@ -1376,7 +1604,7 @@ tg_part_2 <- ggpcoa(ord = tg_prcomp2,
          shape = guide_legend('Location', order = 2),
          fill = FALSE)+
   scale_shape_manual(values = c(16, 17, 18, 15, 20, 25))+
-  labs(tag = 'b)')
+  labs(tag = '(B)')
 
 
 tg_part_2
@@ -1409,7 +1637,7 @@ tg_part_3 <- ggpcoa(ord = tg_prcomp2,
                               order = 1),
          fill = FALSE)+
   scale_shape_manual(values = c(16, 17, 18, 15, 20, 25))+
-  labs(tag = 'c)')
+  labs(tag = '(D)')
 
 
 tg_part_3
@@ -1553,7 +1781,7 @@ part_1 <- ggpcoa(ord = tt_prcomp2,
                        'Bolinger', 'Cold Creek', 'Crocker',
                        'Gunstock', 'Madonna', 'Muir'
                      ))+
-  labs(tag = 'd)')
+  labs(tag = '(D)')
 
 part_1
 #____________________________________________________________
@@ -1584,7 +1812,7 @@ part_2 <- ggpcoa(ord = tt_prcomp2,
          color = guide_colorbar('TTX (mg)'),
          fill = FALSE)+
   scale_shape_manual(values = c(16, 17, 18, 15, 20, 25))+
-  labs(tag = 'e)')
+  labs(tag = '(E)')
 
 
 part_2
@@ -1619,7 +1847,7 @@ part_3 <- ggpcoa(ord = tt_prcomp2,
          color = guide_legend('Infection Status', order = 1),
          fill = FALSE)+
   scale_shape_manual(values = c(16, 17, 18, 15, 20, 25))+
-  labs(tag = 'f)')
+  labs(tag = '(F)')
 
 
 part_3
@@ -1634,7 +1862,7 @@ nmds_plots <- ggarrange(tg_part_1, tg_part_2, tg_part_3, ncol = 3,
 
 nmds_plots    
 
-
+ggsave('Figure_7.pdf', nmds_plots, units = 'in', dpi = 1000, height = 12, width = 18)
 
 
 
@@ -1791,384 +2019,149 @@ merged_pcoa <- ggpcoa(ord = merged_prcomp,
                       ellprob = 0.95,
                       ellipse = TRUE,
                       groups = merged_filtered_metadata$Species
-)+ 
-  ggtitle('Genus Taricha')+
-  theme(plot.title = element_text(hjust = 0.5, 
-                                  size = 20, 
-                                  face = 'italic')) +
+)+
   geom_point(aes(color = factor(merged_filtered_metadata$Species)),
              size = 4)+
-  guides(color = guide_legend('Location'),
+  guides(color = guide_legend('Species',
+                              title.theme = element_text(size = 20),
+                              label.theme = element_text(face = 'italic',
+                                                         size = 15)),
          size = FALSE,
          shape = FALSE)+
   scale_shape_manual(values = c(16, 16, 16, 16, 16, 16,
                                 16, 16, 16, 16, 16, 16))+
-  scale_fill_manual(values = c('red', 'blue', 'green', 'orange', '#8DD3C7', 'cyan',
-                               'salmon', 'violet', '#009933', '#ffcc00', '#330099', '#660033'))+
-  scale_color_manual(values = c('red', 'blue', 'green', 'orange', '#8DD3C7', 'cyan',
-                                'salmon', 'violet', '#009933', '#ffcc00', '#330099', '#660033'))+
-  labs(tag = 'd)')
+  scale_fill_manual(values = c("#F8766D", '#00BFC4'))+
+  scale_color_manual(values = c("#F8766D", '#00BFC4'),
+                     labels = c('Taricha granulosa', 'Taricha torosa')) +
+  labs(tag = '(A)')
 
 merged_pcoa
 
-#_____________________________________________________________________________________________________-
+#################################################
+#Barplots
+setwd('~/Documents/Thesis_Part_2/Newt_TTX_Project/Joint_analysis/')
+relfreq_1 <- read.table('relfreq.tsv', sep = '\t', header = F)
+relfreq_1 <- relfreq_1 %>% 
+  column_to_rownames(var = 'SampleID')
+metadata <- read.csv('2200_full_metadata.csv', header = T)
+relfreq_1 <- relfreq_1[-1,-1]
+
+grouped <- relfreq_1 %>%
+  group_by(Species) %>%
+  slice(-1) %>%
+  summarise_all(rel_abun = colSums(,2:48))
+
+pasetel <- brewer.pal(9, 'Pastel1')
+
+print(pasetel)
+palette1 <- c("#FBB4AE", "#B3CDE3", "#CCEBC5", "#DECBE4", "#FED9A6", "#E5D8BD", "#FDDAEC",
+              "#F2F2F2", 'red', 'blue', 'green', 'orange', '#8DD3C7', 'cyan',
+              'salmon', 'violet', '#009933', '#ffcc00', '#330099', '#660033',
+              "#8C96C6", "#78C679", "#41B6C4", "#FE9929", "#FD8D3C", "#018571", 
+              "#4DAC26","#008837", "#5E3C99", "#0571B0", "#404040", "#2C7BB6", 
+              "#1A9641","#FFFF99", "#E7298A", "#33A02C", "#DECBE4", "#F4CAE4", 
+              "#984EA3", "#E78AC3", "#FB8072", "#2171B5", "#238B45", "#88419D", 
+              "#2B8CBE", "#238B45", "#525252", "#D94701", "#D7301F", "#0570B0", 
+              "#02818A", "#CE1256", "#6A51A3", "#AE017E","#225EA8", "#CC4C02", 
+              "#E31A1C", "#FDC086", "#7570B3")
+print(palette1)
+
+tato_colors <- c("#FBB4AE", "#0571B0", "#008837", "#DECBE4", "#F39929", "#7570B3", "#D7301F", "#FFFF99",
+                 "#F2F2F2", 'red', 'blue', 'green', 'orange', '#8DD3C7', 'cyan',
+                 'salmon', 'violet', '#009933', '#ffcc00', '#330099', '#660033',
+                 "#8C96C6", "#78C679", "#41B6C4", "#FE9929", "#FD8D3C", "#018571", 
+                 "#4DAC26","#008837", "#5E3C99", "#0571B0", "#404040", "#2C7BB6", 
+                 "#1A9641","#FFFF99", "#E7298A", "#33A02C", "#DECBE4", "#F4CAE4", 
+                 "#984EA3", "#E78AC3", "#FB8072", "#2171B5", "#238B45", "#88419D", 
+                 "#2B8CBE", "#238B45", "#525252", "#D94701", "#D7301F", "#0570B0", 
+                 "#02818A", "#CE1256", "#6A51A3", "#AE017E","#225EA8", "#CC4C02", 
+                 "#E31A1C", "#FDC086", "#7570B3")
+tagr_colors <- c("#FBB4AE", "#008837", "#FE9929", "#7570B3", "#DECBE4", "#FFFF99", "#0571B0", "#D7301F",
+                 "#F2F2F2", 'red', 'blue', 'green', 'orange', '#8DD3C7', 'cyan',
+                 'salmon', 'violet', '#009933', '#ffcc00', '#330099', '#660033',
+                 "#8C96C6", "#78C679", "#41B6C4", "#FE9929", "#FD8D3C", "#018571", 
+                 "#4DAC26","#008837", "#5E3C99", "#0571B0", "#404040", "#2C7BB6", 
+                 "#1A9641","#FFFF99", "#E7298A", "#33A02C", "#DECBE4", "#F4CAE4", 
+                 "#984EA3", "#E78AC3", "#FB8072", "#2171B5", "#238B45", "#88419D", 
+                 "#2B8CBE", "#238B45", "#525252", "#D94701", "#D7301F", "#0570B0", 
+                 "#02818A", "#CE1256", "#6A51A3", "#AE017E","#225EA8", "#CC4C02", 
+                 "#E31A1C", "#FDC086", "#7570B3")
+
+gamma <- #fbb4ae
+  bacterioda <- #008837
+  alpha <- #fe9929
+  verrunco <- #7570b3
+  actino
+clostridia
+bacilli
+gracil
+
+new_data <- read.csv('taxa_barplot.csv', header = T, sep = '')
+col_sum <- sum(new_data$Frequency)
+new_data$rel_abundance <- (new_data$Frequency/col_sum)*100
+new_data$Class <- factor(new_data$Class, 
+                         levels = new_data$Class[order(new_data$rel_abundance, decreasing = TRUE)])
+final_tato <- new_data %>%
+  filter(Class %in% unique(Class[1:8]))
+taxa_plot <- final_tato %>%
+  ggplot(aes(x = 1, y = rel_abundance, fill = Class))+ 
+  geom_bar(stat = 'identity')+
+  scale_fill_manual(values = tato_colors)+
+  ylab('Relative Frequency')+
+  xlab('Taricha torosa')+
+  theme_minimal()+
+  theme(
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.title.x = element_text(face = 'italic',
+                                size = 15),
+    axis.title.y = element_text(face = 'bold',
+                                size = 15),
+    legend.title = element_text(face = 'bold',
+                                size = 20)
+  )+
+  scale_x_continuous(breaks = NULL)+
+  labs(tag = '')
+taxa_plot
+
+tagr_data <- read.csv('tagr_taxa_barplot.csv', header = T, sep = '')
+tagr_col_sum <-sum(tagr_data$Frequency)
+tagr_data$rel_abundance <- (tagr_data$Frequency/tagr_col_sum)*100
+tagr_data <- tagr_data[-21,]
+
+tagr_data <- tagr_data |>
+  separate(Taxonomy, into = c('Domain', 'Phylum', 'Class'), 
+           sep = ';') |>
+  mutate(Class = gsub('c__', '', Class)) |>
+  select(-c(1,2)) |>
+  filter(Class %in% unique(Class[1:8]))
+
+tagr_data$Class <- factor(tagr_data$Class, 
+                          levels = tagr_data$Class[order(tagr_data$rel_abundance, decreasing = TRUE)])
 
 
+tagr_barplot <- tagr_data %>%
+  ggplot(aes(x = 1, y = rel_abundance, fill = Class))+
+  geom_bar(stat = 'identity')+
+  scale_fill_manual(values = tagr_colors)+
+  ylab('Relative Frequency')+
+  xlab('Taricha granulosa')+
+  theme_minimal()+
+  theme(
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.title.x = element_text(face = 'italic',
+                                size = 15),
+    axis.title.y = element_text(face = 'bold',
+                                size = 15),
+    legend.title = element_text(face = 'bold',
+                                size = 20)
+  )+
+  scale_x_continuous(breaks = NULL) +
+  labs(tag = '(B)')
+tagr_barplot
 
-
-
-#color_pallete
-colorblind_2 <- c('red', 'blue', 'green', 'orange', 'black', 'cyan',
-                  'salmon', 'violet', '#009933', '#ffcc00', '#330099', '#660033')
-pie(rep(1,12), col = colorblind_2)
-colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", '#be0032', '#FFFF99', "#008837",
-                       "#F0E442", "#0072B2", "#D55E00", "#CC79A7", '#fa8072', '#9FE2BF')
-pie(rep(1, 13), col = colorBlindBlack8)
-
-values <- structure(c("#A6611A", "#D01C8B", "#7B3294", "#E66101", "#CA0020", 
-                      "#CA0020", "#D7191C", "#D7191C", "#D7191C", "#7FC97F", "#1B9E77", 
-                      "#A6CEE3", "#FBB4AE", "#B3E2CD", "#E41A1C", "#66C2A5", "#8DD3C7", 
-                      "#EFF3FF", "#EDF8FB", "#EDF8FB", "#F0F9E8", "#EDF8E9", "#F7F7F7", 
-                      "#FEEDDE", "#FEF0D9", "#F1EEF6", "#F6EFF7", "#F1EEF6", "#F2F0F7", 
-                      "#FEEBE2", "#FEE5D9", "#FFFFCC", "#FFFFCC", "#FFFFD4", "#FFFFB2", 
-                      "#DFC27D", "#F1B6DA", "#C2A5CF", "#FDB863", "#F4A582", "#F4A582", 
-                      "#FDAE61", "#FDAE61", "#FDAE61", "#BEAED4", "#D95F02", "#1F78B4", 
-                      "#B3CDE3", "#FDCDAC", "#377EB8", "#FC8D62", "#FFFFB3", "#BDD7E7", 
-                      "#B2E2E2", "#B3CDE3", "#BAE4BC", "#BAE4B3", "#CCCCCC", "#FDBE85", 
-                      "#FDCC8A", "#BDC9E1", "#BDC9E1", "#D7B5D8", "#CBC9E2", "#FBB4B9", 
-                      "#FCAE91", "#C2E699", "#A1DAB4", "#FED98E", "#FECC5C", "#80CDC1", 
-                      "#B8E186", "#A6DBA0", "#B2ABD2", "#92C5DE", "#BABABA", "#ABD9E9", 
-                      "#A6D96A", "#ABDDA4", "#FDC086", "#7570B3", "#B2DF8A", "#CCEBC5", 
-                      "#CBD5E8", "#4DAF4A", "#8DA0CB", "#BEBADA", "#6BAED6", "#66C2A4", 
-                      "#8C96C6", "#7BCCC4", "#74C476", "#969696", "#FD8D3C", "#FC8D59", 
-                      "#74A9CF", "#67A9CF", "#DF65B0", "#9E9AC8", "#F768A1", "#FB6A4A", 
-                      "#78C679", "#41B6C4", "#FE9929", "#FD8D3C", "#018571", "#4DAC26", 
-                      "#008837", "#5E3C99", "#0571B0", "#404040", "#2C7BB6", "#1A9641", 
-                      "#2B83BA", "#FFFF99", "#E7298A", "#33A02C", "#DECBE4", "#F4CAE4", 
-                      "#984EA3", "#E78AC3", "#FB8072", "#2171B5", "#238B45", "#88419D", 
-                      "#2B8CBE", "#238B45", "#525252", "#D94701", "#D7301F", "#0570B0", 
-                      "#02818A", "#CE1256", "#6A51A3", "#AE017E", "#CB181D", "#238443", 
-                      "#225EA8", "#CC4C02", "#E31A1C")
-                    
-                    
-                    #___tg________-bd_pos_sites
-                    
-                    #_____________-bray_curtis___________________
-                    tg_prcomp4 <- wcmdscale(tg_bray_curtis_matrix, eig = TRUE)
-                    print(tg_prcomp4)
-                    require(ggplot2)
-                    tg_part_12 <- ggpcoa(ord = tg_prcomp4, 
-                                         ordata = tg_bray_curtis_matrix,
-                                         spearrow = NULL, 
-                                         spe = FALSE, 
-                                         cirline = 3,
-                                         ellprob = 0.95,
-                                         ellipse = TRUE,
-                                         groups = filtered_metadata$Location
-                    )+ 
-                      ggtitle('Taricha granulosa')+
-                      theme(plot.title = element_text(hjust = 0.5, 
-                                                      size = 20, 
-                                                      face = 'italic')) +
-                      geom_point(aes(color = factor(filtered_metadata$Location)),
-                                 size = 2)+
-                      guides(color = guide_legend('Location'),
-                             size = FALSE,
-                             shape = FALSE)+
-                      scale_shape_manual(values = c(16, 16, 16,
-                                                    16, 16, 16))+
-                      scale_fill_manual(values = tg_colors)+
-                      scale_color_manual(values = tg_colors)+
-                      labs(tag = 'a)')
-                    
-                    tg_part_12
-                    
-                    
-                    #_________________________________________________________________________
-                    
-                    tg_prcomp22 <- wcmdscale(tg_bray_curtis_matrix, eig = TRUE)
-                    require(ggplot2)
-                    tg_part_22 <- ggpcoa(ord = tg_prcomp22, 
-                                         ordata = tg_bray_curtis_matrix,
-                                         spearrow = NULL, 
-                                         spe = FALSE, 
-                                         cirline = 3,
-                                         ellprob = 0.95,
-                                         ellipse = TRUE
-                    )+ 
-                      ggtitle('Taricha granulosa') +
-                      theme(plot.title = element_text(hjust = 0.5, 
-                                                      size = 20, 
-                                                      face = 'italic')) +
-                      geom_point(aes(color = filtered_metadata$TTX_mg,
-                                     fill = filtered_metadata$TTX_mg,
-                                     shape = filtered_metadata$Location), size = 4) +
-                      scale_color_gradientn(colours = c("#40E0D0", '#ff2626', 'black'),
-                                            values = scales::rescale(c(0.25, 1, 1.5, 3, 4, 
-                                                                       4.5, 5, 6.1, 6.2))) +
-                      scale_fill_gradientn(colours = c("#40E0D0", '#ff2626', 'black'),
-                                           values = scales::rescale(c(0.25, 1, 1.5, 3, 4, 
-                                                                      4.5, 5, 6.1, 6.2)))+
-                      guides(size = FALSE,
-                             color = guide_colorbar('TTX (mg)', order = 1),
-                             shape = guide_legend('Location', order = 2),
-                             fill = FALSE)+
-                      scale_shape_manual(values = c(16, 17, 18, 15, 20, 25))+
-                      labs(tag = 'b)')
-                    
-                    
-                    tg_part_22
-                    #_________________________________________
-                    
-                    tg_part_32 <- ggpcoa(ord = tg_prcomp22, 
-                                         ordata = tg_bray_curtis_matrix,
-                                         spearrow = NULL, 
-                                         spe = FALSE, 
-                                         cirline = 3,
-                                         ellprob = 0.95,
-                                         ellipse = TRUE
-                    )+ 
-                      ggtitle('Taricha granulosa') +
-                      theme(plot.title = element_text(hjust = 0.5, 
-                                                      size = 20, 
-                                                      face = 'italic')) +
-                      geom_point(aes(color = filtered_metadata$Log_bd,
-                                     fill = filtered_metadata$Log_bd,
-                                     shape = filtered_metadata$Location), size = 4) +
-                      scale_color_gradientn(colours = c("#40E0D0", '#ff2626', 'black'),
-                                            values = scales::rescale(c(0.25, 1, 1.5, 3, 4, 
-                                                                       4.5, 5, 6.1, 6.2))) +
-                      scale_fill_gradientn(colours = c("#40E0D0", '#ff2626', 'black'),
-                                           values = scales::rescale(c(0.25, 1, 1.5, 3, 4, 
-                                                                      4.5, 5, 6.1, 6.2)))+
-                      guides(size = FALSE,
-                             shape = guide_legend('Location', 
-                                                  order = 2),
-                             color = guide_colorbar('Infection Intensity',
-                                                    order = 1),
-                             fill = FALSE,
-                             size = FALSE)+
-                      scale_shape_manual(values = c(16, 17, 18, 15, 20, 25))+
-                      labs(tag = 'c)')
-                    
-                    
-                    tg_part_32
-                    
-                    tg_bc <- ggarrange(tg_part_12, tg_part_22, tg_part_32, nrow = 1)
-                    tg_bc
-                    
-                    #____________________________-torosa
-                    tt_prcomp22 <- wcmdscale(tt_bray_curtis_matrix, eig = TRUE)
-                    part_12 <- ggpcoa(ord = tt_prcomp22, 
-                                      ordata = tt_bray_curtis_matrix,
-                                      spearrow = NULL, 
-                                      spe = FALSE, 
-                                      cirline = 3,
-                                      ellprob = 0.95,
-                                      ellipse = TRUE,
-                                      groups = tt_filtered_metadata$Location
-                    )+ 
-                      ggtitle('Taricha torosa')+
-                      theme(plot.title = element_text(hjust = 0.5, 
-                                                      size = 20, 
-                                                      face = 'italic'))+
-                      geom_point(aes(color = factor(tt_filtered_metadata$Location)),
-                                 size = 2)+
-                      guides(color = guide_legend('Location'),
-                             size = FALSE,
-                             shape = FALSE)+
-                      scale_shape_manual(values = c(16, 16, 16,
-                                                    16, 16, 16))+
-                      scale_fill_manual(values = tt_colors)+
-                      scale_color_manual(values = tt_colors,
-                                         labels = c(
-                                           'Bolinger', 'Cold Creek', 'Crocker',
-                                           'Gunstock', 'Madonna', 'Muir'
-                                         ))+
-                      labs(tag = 'd)')
-                    
-                    part_12
-                    #____________________________________________________________
-                    
-                    part_22 <- ggpcoa(ord = tt_prcomp22, 
-                                      ordata = tt_bray_curtis_matrix,
-                                      spearrow = NULL, 
-                                      spe = FALSE, 
-                                      cirline = 3,
-                                      ellprob = 0.95,
-                                      ellipse = TRUE
-                    )+ 
-                      ggtitle('Taricha torosa') +
-                      theme(plot.title = element_text(hjust = 0.5, 
-                                                      size = 20, 
-                                                      face = 'italic')) +
-                      geom_point(aes(color = tt_filtered_metadata$TTX_mg,
-                                     fill = tt_filtered_metadata$TTX_mg,
-                                     shape = tt_filtered_metadata$Location), size = 4) +
-                      scale_color_gradientn(colours = c("#40E0D0", '#ff2626', 'black'),
-                                            values = scales::rescale(c(0.25, 1, 1.5, 3, 4, 
-                                                                       4.5, 5, 6.1, 6.2))) +
-                      scale_fill_gradientn(colours = c("#40E0D0", '#ff2626', 'black'),
-                                           values = scales::rescale(c(0.25, 1, 1.5, 3, 4, 
-                                                                      4.5, 5, 6.1, 6.2)))+
-                      guides(size = FALSE,
-                             shape = guide_legend('Location'),
-                             color = guide_colorbar('TTX (mg)'),
-                             fill = FALSE)+
-                      scale_shape_manual(values = c(16, 17, 18, 15, 20, 25))+
-                      labs(tag = 'e)')
-                    
-                    
-                    part_22
-                    
-                    
-                    
-                    
-                    #____________________________________________________________
-                    
-                    part_32 <- ggpcoa(ord = tt_prcomp22, 
-                                      ordata = tt_bray_curtis_matrix,
-                                      spearrow = NULL, 
-                                      spe = FALSE, 
-                                      cirline = 3,
-                                      ellprob = 0.95,
-                                      ellipse = TRUE
-                    )+ 
-                      ggtitle('Taricha torosa') +
-                      theme(plot.title = element_text(hjust = 0.5, 
-                                                      size = 20, 
-                                                      face = 'italic')) +
-                      geom_point(aes(color = tt_filtered_metadata$Log_bd,
-                                     fill = tt_filtered_metadata$Log_bd,
-                                     shape = tt_filtered_metadata$Location), size = 4) +
-                      scale_color_gradientn(colours = c("#40E0D0", '#ff2626', 'black'),
-                                            values = scales::rescale(c(0.25, 1, 1.5, 3, 4, 
-                                                                       4.5, 5, 6.1, 6.2))) +
-                      scale_fill_gradientn(colours = c("#40E0D0", '#ff2626', 'black'),
-                                           values = scales::rescale(c(0.25, 1, 1.5, 3, 4, 
-                                                                      4.5, 5, 6.1, 6.2)))+
-                      guides(size = FALSE,
-                             shape = guide_legend('Location', 
-                                                  order = 2),
-                             color = guide_colorbar('Infection Intensity',
-                                                    order = 1),
-                             fill = FALSE)+
-                      scale_shape_manual(values = c(16, 17, 18, 15, 20, 25))+
-                      labs(tag = 'f)')
-                    
-                    
-                    part_32
-                    
-                    tt_bc <- ggarrange(part_12, part_22 ,part_32, nrow = 1)
-                    tt_bc
-                    
-                    final_bc_plots <- ggarrange(tg_bc, tt_bc,
-                                                nrow = 2)
-                    final_bc_plots
-                    
-                    
-                    
-                    #LDM
-                    
-                    #check to see if they're different
-                    
-                    BC_LDM1 <- permanovaFL(tg_bray_curtis_matrix ~ filtered_metadata$Location, 
-                                           perm.between.type = 'free',
-                                           perm.within.type = 'free',
-                                           seed = 999,
-                                           square.dist = FALSE,
-                                           n.cores = 8,
-                                           n.perm.max = 5000)
-                    BC_LDM1$F.statistics
-                    BC_LDM1$R.squared
-                    BC_LDM1$p.permanova
-                    
-                    #how are they different
-                    
-                    BC_disp<-betadisper(as.dist(tg_bray_curtis_matrix), 
-                                        filtered_metadata$Location,
-                                        type = c("centroid"),
-                                        bias.adjust = TRUE,
-                                        sqrt.dist = FALSE,
-                                        add = FALSE)
-                    anova(BC_disp)
-                    
-                    
-                    Taxa <-parse_taxonomy(read_qza("./taxonomy/classification.qza")$data)%>%
-                      rownames_to_column("featureid")%>%
-                      dplyr::select(-Kingdom)%>%
-                      mutate(across(everything(),~gsub("[][]","",.)),
-                             across(everything(),~replace_na(.,"")))
-                    
-                    for (i in 1:nrow(Taxa)){
-                      if (Taxa[i,7] != ""){
-                        Taxa$Species[i] <- paste(Taxa$Genus[i], Taxa$Species[i], sep=" ")
-                      } else if (Taxa[i,2] == ""){
-                        Phylum <- paste("Unclassified", "Bacteria", sep="-")
-                        Taxa[i, 2:7] <- Phylum
-                      } else if (Taxa[i,3] == ""){
-                        Class <- paste(Taxa[i,2],"(P)", sep=" ")
-                        Taxa[i, 3:7] <- Class
-                      } else if (Taxa[i,4] == ""){
-                        Order <- paste(Taxa[i,3],"(C)", sep=" ")
-                        Taxa[i, 4:7] <- Order
-                      } else if (Taxa[i,5] == ""){
-                        Family <- paste(Taxa[i,4],"(O)", sep=" ")
-                        Taxa[i, 5:7] <- Family
-                      } else if (Taxa[i,6] == ""){
-                        Genus <- paste(Taxa[i,5],"(F)", sep=" ")
-                        Taxa[i, 6:7] <- Genus
-                      } else if (Taxa[i,7] == ""){
-                        Taxa$Species[i] <- paste(Taxa$Genus[i],"sp.", sep=" ")
-                      }
-                    }
-                    
-                    rar_tab <- as.data.frame(read_qza('./core_metrics/all_samples/2200/all_samples_table.qza')$data)
-                    tg_2200_rare <- as.data.frame(t(rar_tab)) %>%
-                      rownames_to_column("SampleID")
-                    
-                    tg_OTU_table <- rar_tab %>%
-                      rownames_to_column('featureID')
-                    
-                    tg_2200_rare <- tg_2200_rare %>%
-                      filter(!SampleID == 'FCSP-05') %>%
-                      arrange("SampleID")
-                    
-                    matched_1 <- tg_2200_rare %>%
-                      filter(SampleID %in% filtered_metadata$SampleID)%>%
-                      column_to_rownames("SampleID")%>%
-                      .[colSums(.[]) !=0] %>%
-                      rownames_to_column("SampleID")
-                    
-                    matched_tab <- matched_1 %>%
-                      .[ order(match(matched_1$SampleID, metadata_frame$SampleID)),] %>%
-                      select(.,-SampleID)
-                    
-                    metadata_frame <- read.csv('~/Documents/Thesis_Part_2/Newt_TTX_Project/newt_ttx/newt_metadata.tsv', 
-                                               sep = '\t',
-                                               row.names = NULL) %>%
-                      rename(SampleID = 1) %>%
-                      filter(!SampleID == 'FCSP-05') %>%
-                      as.data.frame() %>%
-                      arrange(SampleID) %>%
-                      filter(SampleID %in% filtered_metadata$SampleID)
-                    
-                    metadata_new <- metadata_frame %>%
-                      select(SampleID, TTX_mg) %>%
-                      column_to_rownames("SampleID")
-                    
-                    ttx_mg <- as.data.frame(metadata_new$TTX_mg)
-                    colnames(ttx_mg)[1] <- "TTX_mg"
-                    rownames_to_column(ttx_mg)
-                    rownames(ttx_mg) <- NULL
-                    any(duplicated(rownames(ttx_mg)))
-                    any(duplicated(rownames(matched_tab)))
-                    rownames(metadata_frame) <- seq_len(nrow(metadata_frame))
-                    
-                    tg_ttx_location_ldm <- ldm(matched_tab ~ metadata_frame$Site,
-                                               perm.within.type="free", 
-                                               perm.between.type="none",
-                                               seed=999,dist.method = "bray", 
-                                               fdr.nominal = 0.01, 
-                                               n.cores = 10,
-                                               n.perm.max = 10000)
+barplots <- ggarrange(tagr_barplot, taxa_plot)
+merged_fig_5 <- ggarrange(merged_pcoa, barplots)
+merged_fig_5
+ggsave('figure_5.pdf', merged_fig_5, units = 'in', dpi = 1000, height = 10, width = 18)
