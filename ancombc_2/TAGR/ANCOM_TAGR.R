@@ -66,6 +66,7 @@ full_match <- matched %>%
   mutate(asv_id = paste0("ASV", sprintf("%03d", seq(1, nrow(matched))))) %>% 
   mutate(label = paste0(asv_id, " (", Family, ")"))
 
+#combine the PSD ASVs by hand because for some reason they aren't combining as they should
 asvs_to_combine <- c("ASV001", "ASV003")
 asvs_to_combine2 <- c("ASV002", "ASV005")
 
